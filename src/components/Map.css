@@ -1,0 +1,224 @@
+.map-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 0;
+  cursor: crosshair;
+}
+
+/* Map Controls */
+.map-controls {
+  position: fixed;
+  top: 20px;
+  right: 60px;
+  z-index: 1000;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.zoom-info-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.zoom-info-display svg {
+  color: #4CAF50;
+}
+
+/* Grid Square Popup Styles */
+.grid-popup {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  min-width: 200px;
+}
+
+.grid-popup h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  border-bottom: 2px solid #4CAF50;
+  padding-bottom: 4px;
+}
+
+.grid-popup .popup-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.grid-popup .popup-row svg {
+  flex-shrink: 0;
+  color: #4CAF50;
+}
+
+.grid-popup .popup-content {
+  flex: 1;
+  font-size: 12px;
+  color: #333;
+}
+
+.grid-popup .popup-content > div {
+  line-height: 1.5;
+}
+
+.grid-popup .elevation-value {
+  font-weight: 600;
+  color: #FF9800;
+}
+
+.grid-popup .elevation-loading,
+.grid-popup .elevation-error {
+  font-style: italic;
+  color: #666;
+}
+
+.grid-popup .elevation-error {
+  color: #f44336;
+}
+
+.grid-popup .grid-level {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.grid-popup .grid-level:last-child {
+  border-bottom: none;
+}
+
+.grid-popup .grid-level .label {
+  font-size: 12px;
+  color: #666;
+  min-width: 100px;
+}
+
+.grid-popup .grid-level .value {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2196F3;
+  background: #f5f5f5;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.grid-popup .popup-content strong {
+  font-size: 12px;
+  color: #555;
+}
+
+.grid-popup .zoom-info {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+
+/* Leaflet popup adjustments */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-popup-content {
+  margin: 12px;
+}
+
+/* Force light color scheme for layer control */
+.leaflet-control-layers {
+  color-scheme: light;
+}
+
+/* Lighter layer control inputs */
+.leaflet-control-layers input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ddd;
+  background-color: white;
+  border-radius: 50%;
+  position: relative;
+  color-scheme: light;
+}
+
+.leaflet-control-layers input[type="radio"]:checked::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4CAF50;
+}
+
+.leaflet-control-layers input[type="checkbox"] {
+  accent-color: #4CAF50;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.leaflet-control-layers label {
+  cursor: pointer;
+  font-weight: 400;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .map-controls {
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+  }
+
+  .zoom-info-display {
+    font-size: 12px;
+  }
+
+  .grid-popup {
+    min-width: 200px;
+  }
+
+  .grid-popup h3 {
+    font-size: 14px;
+  }
+
+  .grid-popup .popup-content {
+    font-size: 11px;
+  }
+
+  .grid-popup .grid-level .label {
+    font-size: 11px;
+    min-width: 80px;
+  }
+
+  .grid-popup .grid-level .value {
+    font-size: 12px;
+  }
+
+  /* Ensure touch targets are large enough */
+  .leaflet-control-zoom a {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+}

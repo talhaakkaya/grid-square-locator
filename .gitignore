@@ -1,0 +1,124 @@
+.deploy
+*~
+.#*
+._*
+*.bak
+/build
+build
+# Build output
+bunny-cdn.sh
+.cache
+.cache/
+# Cache directories
+.claude
+CLAUDE.md
+coverage
+coverage/
+# Coverage directory used by tools like istanbul
+# Dependencies
+# Dependency directories
+Desktop.ini
+# Development
+/dist
+dist
+dist-ssr
+.DS_Store
+.DS_Store?
+# Editor directories and files
+ehthumbs.db
+.env
+.env.development.local
+# Environment variables
+.env.local
+.env.production.local
+.env.test.local
+.eslintcache
+# Gatsby files
+.idea
+jspm_packages/
+*.lcov
+lerna-debug.log*
+*.local
+*.log
+logs
+# Logs
+# Microbundle cache
+.next
+# Next.js build output
+*.njsproj
+node_modules
+node_modules/
+.node_repl_history
+.npm
+npm-debug.log*
+*.ntvs*
+.nuxt
+# Nuxt.js build / generate output
+.nyc_output
+# nyc test coverage
+# Optional eslint cache
+# Optional npm cache directory
+# Optional REPL history
+# Optional stylelint cache
+# OS files
+# OS generated files
+.out
+out
+.output
+# Output of 'npm pack'
+# parcel-bundler cache (https://parceljs.org/)
+.parcel-cache
+*.pid
+*.pid.lock
+pids
+.pnp
+/.pnp
+.pnp.js
+pnpm-debug.log*
+# Production builds
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+# Runtime data
+*.seed
+*.sln
+.Spotlight-V100
+# Storybook build outputs
+.storybook-out
+storybook-static
+.stylelintcache
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.sw?
+*.swn
+*.swo
+*.swp
+*.temp
+temp/
+# Temporary files
+# Temporary folders
+# Test files
+test-import.csv# Dependencies
+# Testing
+*.tgz
+Thumbs.db
+*.tmp
+tmp/
+.Trashes
+*.tsbuildinfo
+.turbo
+# TypeScript cache
+.vite
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+yarn-debug.log*
+yarn-error.log*
+.yarn-integrity
+# Yarn Integrity file
+
+/src/generated/prisma

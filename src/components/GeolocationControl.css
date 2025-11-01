@@ -1,0 +1,80 @@
+.geolocation-control {
+  position: fixed;
+  bottom: 120px;
+  right: 10px;
+  z-index: 1000;
+}
+
+.locate-button {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+}
+
+.locate-button:hover:not(:disabled) {
+  background: #f4f4f4;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.locate-button:active:not(:disabled) {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.locate-button.locating {
+  animation: pulse 1s infinite;
+}
+
+.locate-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.locate-error {
+  position: absolute;
+  bottom: 50px;
+  right: 0;
+  background: #f44336;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .geolocation-control {
+    bottom: 100px;
+  }
+}
