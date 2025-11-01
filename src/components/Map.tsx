@@ -4,9 +4,11 @@ import type { Map as LeafletMap } from 'leaflet';
 import { LocationMarker, type GridInfo } from './LocationMarker';
 import { GridSquareOverlay } from './GridSquareOverlay';
 import { DockPanel } from './DockPanel';
-import { getMapStateFromURL } from '../utils/urlParams';
+import { getMapStateFromURL, updateURLWithMapState } from '../utils/urlParams';
+import { latLngToMaidenhead, getPrecisionForZoom } from '../utils/maidenhead';
 import { useElevation } from '../hooks/useElevation';
 import { useMapSearch } from '../hooks/useMapSearch';
+import { useGeolocation } from '../hooks/useGeolocation';
 import type { LatLng } from '../types';
 import './Map.css';
 
@@ -60,6 +62,31 @@ export function Map({ onLocationClick }: MapProps) {
     onGridSelect: handleGridSelect,
   });
 
+  // Use geolocation hook
+  const { getCurrentLocation, isLocating, error: geolocationError, clearError } = useGeolocation();
+
+  // Handle get current location
+  const handleGetCurrentLocation = async () => {
+    const location = await getCurrentLocation();
+    if (!location || !mapRef.current) return;
+
+    const zoom = 13; // Good detail level for viewing grid squares
+    const precision = getPrecisionForZoom(zoom);
+    const gridSquare = latLngToMaidenhead(location.lat, location.lng, precision);
+
+    // Update URL
+    updateURLWithMapState(location, zoom, gridSquare);
+
+    // Pan/zoom map with smooth animation
+    mapRef.current.flyTo([location.lat, location.lng], zoom);
+
+    // Update grid info (triggers elevation fetch automatically)
+    handleGridSelect({
+      locator: gridSquare,
+      center: location,
+    });
+  };
+
   return (
     <>
       <MapContainer
@@ -106,6 +133,10 @@ export function Map({ onLocationClick }: MapProps) {
         elevationLoading={elevationLoading}
         elevationError={elevationError ? 'Unable to fetch elevation' : null}
         onSearch={handleSearch}
+        onGetCurrentLocation={handleGetCurrentLocation}
+        isLocating={isLocating}
+        geolocationError={geolocationError}
+        onClearGeolocationError={clearError}
         visible={true}
       />
     </>

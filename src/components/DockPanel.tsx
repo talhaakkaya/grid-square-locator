@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Grid3x3, MapPin, Mountain, Map, Github } from 'lucide-react';
+import { Grid3x3, MapPin, Mountain, Map, Github, Navigation, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { SearchResults, type SearchResult } from './SearchResults';
 import { formatElevation } from '../services/elevationService';
 import { useClickOutside } from '../hooks/useClickOutside';
@@ -13,6 +13,10 @@ interface DockPanelProps {
   elevationLoading: boolean;
   elevationError: string | null;
   onSearch: (query: string) => void;
+  onGetCurrentLocation: () => void;
+  isLocating: boolean;
+  geolocationError: string | null;
+  onClearGeolocationError: () => void;
   visible: boolean;
 }
 
@@ -23,11 +27,16 @@ export function DockPanel({
   elevationLoading,
   elevationError,
   onSearch,
+  onGetCurrentLocation,
+  isLocating,
+  geolocationError,
+  onClearGeolocationError,
   visible,
 }: DockPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [locationButtonState, setLocationButtonState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const searchSectionRef = useRef<HTMLDivElement>(null);
 
   // Use search with results hook
@@ -41,6 +50,29 @@ export function DockPanel({
 
   // Close results when clicking outside
   useClickOutside(searchSectionRef, () => setShowResults(false));
+
+  // Track location button state based on isLocating and geolocationError
+  useEffect(() => {
+    if (isLocating) {
+      setLocationButtonState('loading');
+    } else if (geolocationError) {
+      setLocationButtonState('error');
+      // Reset to idle after 2 seconds
+      const timer = setTimeout(() => {
+        setLocationButtonState('idle');
+        onClearGeolocationError();
+      }, 2000);
+      return () => clearTimeout(timer);
+    } else if (locationButtonState === 'loading') {
+      // Was loading and now not loading with no error = success
+      setLocationButtonState('success');
+      // Reset to idle after 2 seconds
+      const timer = setTimeout(() => {
+        setLocationButtonState('idle');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLocating, geolocationError, locationButtonState, onClearGeolocationError]);
 
   const handleResultSelect = (result: SearchResult) => {
     const searchValue = result.type === 'grid' ? result.gridSquare : result.name;
@@ -113,6 +145,29 @@ export function DockPanel({
         </div>
 
         <div className="dock-info-row">
+          <button
+            onClick={onGetCurrentLocation}
+            disabled={locationButtonState === 'loading'}
+            className={`locate-button ${locationButtonState}`}
+            title={
+              locationButtonState === 'loading' ? 'Finding your location...' :
+              locationButtonState === 'success' ? 'Location found!' :
+              locationButtonState === 'error' ? 'Failed to get location' :
+              'Get my current location'
+            }
+            aria-label="Get current location"
+          >
+            {locationButtonState === 'loading' && <Loader2 size={18} className="spinner" />}
+            {locationButtonState === 'success' && <CheckCircle size={18} />}
+            {locationButtonState === 'error' && <XCircle size={18} />}
+            {locationButtonState === 'idle' && <Navigation size={18} />}
+            <span className="locate-button-text">
+              {locationButtonState === 'loading' && 'Locating...'}
+              {locationButtonState === 'success' && 'Found!'}
+              {locationButtonState === 'error' && 'Failed'}
+              {locationButtonState === 'idle' && 'My Location'}
+            </span>
+          </button>
           <div className="dock-section">
             <Grid3x3 size={18} />
             <span className="dock-value">{gridSquare || '-'}</span>

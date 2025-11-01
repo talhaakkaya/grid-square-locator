@@ -142,6 +142,77 @@
   padding: 0 8px;
 }
 
+.locate-button {
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 8px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.locate-button:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+.locate-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.locate-button svg {
+  color: #666;
+}
+
+.locate-button.success {
+  background: #e8f5e9;
+}
+
+.locate-button.success svg {
+  color: #4CAF50;
+}
+
+.locate-button.success .locate-button-text {
+  color: #4CAF50;
+}
+
+.locate-button.error {
+  background: #ffebee;
+}
+
+.locate-button.error svg {
+  color: #f44336;
+}
+
+.locate-button.error .locate-button-text {
+  color: #f44336;
+}
+
+.locate-button-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .dock-panel {
