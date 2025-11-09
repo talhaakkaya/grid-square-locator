@@ -66,8 +66,8 @@ export function useMapSearch({ mapRef, onGridSelect }: UseMapSearchProps) {
             lng: parseFloat(result.lon),
           };
 
-          const zoom = mapRef.current?.getZoom() || 12;
-          const precision = getPrecisionForZoom(zoom);
+          const precision: GridPrecision = 6; // Match search results precision
+          const zoom = getZoomForPrecision(precision);
           const gridSquare = latLngToMaidenhead(center.lat, center.lng, precision);
 
           // Update URL
