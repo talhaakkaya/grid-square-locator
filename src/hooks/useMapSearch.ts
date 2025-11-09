@@ -5,7 +5,7 @@
 import { useCallback } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import { isValidGridSquare, normalizeGridSquare } from '../utils/validation';
-import { maidenheadToBounds, latLngToMaidenhead, getZoomForPrecision, getPrecisionForZoom } from '../utils/maidenhead';
+import { maidenheadToBounds, latLngToMaidenhead, getZoomForPrecision } from '../utils/maidenhead';
 import { searchLocation } from '../services/nominatimService';
 import { updateURLWithMapState } from '../utils/urlParams';
 import type { LatLng, GridPrecision } from '../types';
