@@ -97,6 +97,11 @@ export function DockPanel({
         e.preventDefault();
         if (searchResults[selectedIndex]) {
           handleResultSelect(searchResults[selectedIndex]);
+        } else if (searchQuery.trim()) {
+          // User pressed Enter before debounce completed - search immediately
+          onSearch(searchQuery.trim());
+          setSearchQuery('');
+          setShowResults(false);
         }
         break;
       case 'Escape':

@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { searchLocation } from '../services/nominatimService';
 import { maidenheadToBounds, latLngToMaidenhead } from '../utils/maidenhead';
-import { isValidGridSquare, normalizeGridSquare } from '../utils/validation';
+import { isValidGridSquare, normalizeGridSquare, parseCoordinates, isValidCoordinatePair } from '../utils/validation';
 import { DEBOUNCE_DELAYS } from '../utils/constants';
 import type { SearchResult } from '../components/SearchResults';
 
@@ -35,7 +35,23 @@ export function useSearchWithResults(searchQuery: string) {
       setIsSearching(true);
 
       try {
-        if (isValidGridSquare(searchQuery)) {
+        if (isValidCoordinatePair(searchQuery)) {
+          // Coordinate search - parse and show confirmation
+          const coords = parseCoordinates(searchQuery.trim());
+          if (coords) {
+            const grid = latLngToMaidenhead(coords.lat, coords.lng, 6);
+            setSearchResults([{
+              id: 'coords-1',
+              type: 'grid',
+              name: `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`,
+              gridSquare: grid,
+              lat: coords.lat,
+              lng: coords.lng,
+            }]);
+          } else {
+            setSearchResults([]);
+          }
+        } else if (isValidGridSquare(searchQuery)) {
           // Grid square search - validate and show confirmation
           try {
             const bounds = maidenheadToBounds(searchQuery.trim());

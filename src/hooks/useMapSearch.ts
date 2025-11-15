@@ -4,7 +4,7 @@
 
 import { useCallback } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
-import { isValidGridSquare, normalizeGridSquare } from '../utils/validation';
+import { isValidGridSquare, normalizeGridSquare, parseCoordinates, isValidCoordinatePair } from '../utils/validation';
 import { maidenheadToBounds, latLngToMaidenhead, getZoomForPrecision } from '../utils/maidenhead';
 import { searchLocation } from '../services/nominatimService';
 import { updateURLWithMapState } from '../utils/urlParams';
@@ -17,14 +17,37 @@ interface UseMapSearchProps {
 }
 
 /**
- * Hook to handle both grid square and location name searches
+ * Hook to handle coordinate, grid square, and location name searches
  * @param mapRef Reference to the Leaflet map instance
  * @param onGridSelect Callback when a grid square is selected
  * @returns Object with handleSearch function
  */
 export function useMapSearch({ mapRef, onGridSelect }: UseMapSearchProps) {
   const handleSearch = useCallback(async (query: string) => {
-    if (isValidGridSquare(query)) {
+    // Check for coordinate input first (e.g., "41.020833, 28.875000")
+    if (isValidCoordinatePair(query)) {
+      const coords = parseCoordinates(query);
+      if (coords) {
+        const center: LatLng = coords;
+        const precision: GridPrecision = 6; // Use subsquare precision for coordinate searches
+        const zoom = getZoomForPrecision(precision);
+        const gridSquare = latLngToMaidenhead(center.lat, center.lng, precision);
+
+        // Update URL
+        updateURLWithMapState(center, zoom);
+
+        // Fly to location
+        if (mapRef.current) {
+          mapRef.current.flyTo([center.lat, center.lng], zoom);
+        }
+
+        // Update grid info
+        onGridSelect({
+          locator: gridSquare,
+          center,
+        });
+      }
+    } else if (isValidGridSquare(query)) {
       // Handle grid square search
       try {
         const bounds = maidenheadToBounds(query);

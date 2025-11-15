@@ -111,7 +111,7 @@ export function Map({ onLocationClick }: MapProps) {
               maxZoom={18}
             />
           </LayersControl.BaseLayer>
-          <LayersControl.Overlay name="Labels">
+          <LayersControl.Overlay checked name="Labels">
             <TileLayer
               attribution='&copy; <a href="https://www.arcgis.com/">Esri</a>'
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"

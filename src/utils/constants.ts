@@ -8,7 +8,7 @@ import type { GridPrecision } from '../types';
  * Regular expression pattern for validating Maidenhead grid square locators
  * Matches 2-10 character grid squares (e.g., "FN", "FN31", "FN31pr", "FN31pr45", "FN31pr45ab")
  */
-export const GRID_SQUARE_PATTERN = /^[a-zA-Z]{2}[0-9]{2}([a-zA-Z]{2}([0-9]{2}([a-zA-Z]{2})?)?)?$/;
+export const GRID_SQUARE_PATTERN = /^[a-zA-Z]{2}([0-9]{2}([a-zA-Z]{2}([0-9]{2}([a-zA-Z]{2})?)?)?)?$/;
 
 /**
  * Zoom level configuration for different grid precisions
