@@ -324,6 +324,10 @@
   border-top-color: rgba(25, 118, 210, 0.9) !important;
 }
 
+.leaflet-tooltip-top::before {
+  margin-bottom: -11px;
+}
+
 .coverage-origin-tooltip .leaflet-tooltip-pane {
   pointer-events: auto !important;
 }
