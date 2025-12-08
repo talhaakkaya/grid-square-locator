@@ -61,3 +61,44 @@ export const API_CONFIG = {
 export const CACHE_KEYS = {
   NOMINATIM: 'nominatim_',
 } as const;
+
+/**
+ * Line-of-Sight calculation configuration
+ */
+export const LOS_CONFIG = {
+  MAX_DISTANCE_KM: 300,
+  SAMPLE_INTERVAL_KM: 1,
+  EARTH_RADIUS_KM: 6371,
+  K_FACTOR: 4 / 3,
+  BATCH_SIZE: 100,
+  MAX_CONCURRENT_REQUESTS: 5,
+  REQUEST_DELAY_MS: 100,
+  NUM_RADIALS: 720,
+} as const;
+
+/**
+ * Default values
+ */
+export const DEFAULTS = {
+  ANTENNA_HEIGHT_M: 10,
+} as const;
+
+/**
+ * LocalStorage keys
+ */
+export const STORAGE_KEYS = {
+  ANTENNA_HEIGHT: 'antenna_height',
+} as const;
+
+/**
+ * Color schemes for multiple coverage overlays
+ * Each scheme defines start and end hue for the gradient (short range to long range)
+ */
+export const COVERAGE_COLORS = [
+  { name: 'red-green', startHue: 0, endHue: 120 },
+  { name: 'purple-blue', startHue: 280, endHue: 240 },
+  { name: 'orange-yellow', startHue: 30, endHue: 60 },
+  { name: 'pink-magenta', startHue: 330, endHue: 300 },
+  { name: 'cyan-teal', startHue: 180, endHue: 160 },
+  { name: 'lime-green', startHue: 90, endHue: 140 },
+] as const;

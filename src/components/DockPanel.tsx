@@ -1,17 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Grid3x3, MapPin, Mountain, Map, Github, Navigation, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Map, Github, Navigation, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { SearchResults, type SearchResult } from './SearchResults';
-import { formatElevation } from '../services/elevationService';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useSearchWithResults } from '../hooks/useSearchWithResults';
 import './DockPanel.css';
 
 interface DockPanelProps {
-  gridSquare: string | null;
-  coordinates: { lat: number; lng: number } | null;
-  elevation: number | null;
-  elevationLoading: boolean;
-  elevationError: string | null;
   onSearch: (query: string) => void;
   onGetCurrentLocation: () => void;
   isLocating: boolean;
@@ -21,11 +15,6 @@ interface DockPanelProps {
 }
 
 export function DockPanel({
-  gridSquare,
-  coordinates,
-  elevation,
-  elevationLoading,
-  elevationError,
   onSearch,
   onGetCurrentLocation,
   isLocating,
@@ -173,27 +162,6 @@ export function DockPanel({
               {locationButtonState === 'idle' && 'My Location'}
             </span>
           </button>
-          <div className="dock-section">
-            <Grid3x3 size={18} />
-            <span className="dock-value">{gridSquare || '-'}</span>
-          </div>
-
-          <div className="dock-section">
-            <MapPin size={18} />
-            <span className="dock-value">
-              {coordinates ? `${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)}` : '-'}
-            </span>
-          </div>
-
-          <div className="dock-section">
-            <Mountain size={18} />
-            <span className="dock-value">
-              {elevationLoading && 'Loading...'}
-              {elevationError && <span className="error-text">{elevationError}</span>}
-              {elevation !== null && !elevationLoading && formatElevation(elevation)}
-              {!elevationLoading && !elevationError && elevation === null && '-'}
-            </span>
-          </div>
         </div>
 
         <div className="dock-credit">

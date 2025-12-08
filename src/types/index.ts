@@ -31,3 +31,26 @@ export interface NominatimResult {
   type?: string;
   importance?: number;
 }
+
+// LOS Coverage Types
+export interface CoverageRay {
+  bearing: number;      // 0-359 degrees
+  distance: number;     // LOS distance in km (0-200)
+  endpoint: LatLng;     // Calculated endpoint coordinates
+}
+
+export interface CoverageData {
+  id: string;               // Unique identifier
+  center: LatLng;           // Observer location
+  antennaHeight: number;    // Antenna height in meters
+  rays: CoverageRay[];      // 360 rays, one per degree
+  calculatedAt: number;     // Timestamp for cache invalidation
+  gridSquare?: string;      // Grid square label for the center
+  colorIndex: number;       // Index for color scheme
+}
+
+export interface CoverageProgress {
+  currentBearing: number;   // Current bearing being calculated
+  totalBearings: number;    // Always 360
+  percentage: number;       // 0-100
+}

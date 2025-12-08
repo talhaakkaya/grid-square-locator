@@ -159,7 +159,12 @@
 }
 
 .locate-button:hover:not(:disabled) {
-  background: #e8e8e8;
+  background: #e0e0e0;
+  color: #333;
+}
+
+.locate-button:hover:not(:disabled) svg {
+  color: #333;
 }
 
 .locate-button:disabled {
@@ -173,26 +178,38 @@
 
 .locate-button.success {
   background: #e8f5e9;
+  color: #4CAF50;
 }
 
 .locate-button.success svg {
   color: #4CAF50;
 }
 
-.locate-button.success .locate-button-text {
-  color: #4CAF50;
+.locate-button.success:hover:not(:disabled) {
+  background: #c8e6c9;
+  color: #388E3C;
+}
+
+.locate-button.success:hover:not(:disabled) svg {
+  color: #388E3C;
 }
 
 .locate-button.error {
   background: #ffebee;
+  color: #f44336;
 }
 
 .locate-button.error svg {
   color: #f44336;
 }
 
-.locate-button.error .locate-button-text {
-  color: #f44336;
+.locate-button.error:hover:not(:disabled) {
+  background: #ffcdd2;
+  color: #d32f2f;
+}
+
+.locate-button.error:hover:not(:disabled) svg {
+  color: #d32f2f;
 }
 
 .locate-button-text {
@@ -211,6 +228,156 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Antenna input section */
+.antenna-section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.antenna-input {
+  width: 50px;
+  padding: 4px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  background: #f8f9fa;
+  color: #333;
+}
+
+.antenna-input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  background: #fff;
+}
+
+.antenna-input::-webkit-inner-spin-button,
+.antenna-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.antenna-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.antenna-unit {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Coverage button */
+.coverage-button {
+  padding: 8px 12px;
+  background: #e3f2fd;
+  border: none;
+  border-radius: 8px;
+  color: #1976d2;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.coverage-button:hover:not(:disabled) {
+  background: #bbdefb;
+  color: #1565c0;
+}
+
+.coverage-button:hover:not(:disabled) svg {
+  color: #1565c0;
+}
+
+.coverage-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.coverage-button svg {
+  color: #1976d2;
+}
+
+.coverage-button.loading {
+  background: #fff3e0;
+  color: #f57c00;
+  min-width: 80px;
+}
+
+.coverage-button.loading svg {
+  color: #f57c00;
+}
+
+.coverage-button.success {
+  background: #e8f5e9;
+  color: #4CAF50;
+}
+
+.coverage-button.success svg {
+  color: #4CAF50;
+}
+
+.coverage-button.success:hover:not(:disabled) {
+  background: #c8e6c9;
+  color: #388E3C;
+}
+
+.coverage-button.success:hover:not(:disabled) svg {
+  color: #388E3C;
+}
+
+.coverage-button.error {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.coverage-button.error svg {
+  color: #f44336;
+}
+
+.coverage-button.error:hover:not(:disabled) {
+  background: #ffcdd2;
+  color: #d32f2f;
+}
+
+.coverage-button.error:hover:not(:disabled) svg {
+  color: #d32f2f;
+}
+
+/* Small clear coverage button */
+.clear-coverage-button {
+  padding: 8px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.clear-coverage-button:hover {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.clear-coverage-button svg {
+  color: inherit;
+}
+
+.coverage-button-text {
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* Mobile responsive */

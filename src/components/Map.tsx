@@ -1,14 +1,17 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, LayersControl } from 'react-leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 import { LocationMarker, type GridInfo } from './LocationMarker';
 import { GridSquareOverlay } from './GridSquareOverlay';
+import { CoverageOverlay } from './CoverageOverlay';
 import { DockPanel } from './DockPanel';
+import { Toast } from './Toast';
 import { getMapStateFromURL, updateURLWithMapState } from '../utils/urlParams';
 import { latLngToMaidenhead, getPrecisionForZoom } from '../utils/maidenhead';
 import { useElevation } from '../hooks/useElevation';
 import { useMapSearch } from '../hooks/useMapSearch';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useCoverage } from '../hooks/useCoverage';
 import type { LatLng } from '../types';
 import './Map.css';
 
@@ -17,74 +20,85 @@ interface MapProps {
 }
 
 export function Map({ onLocationClick }: MapProps) {
-  const gridVisible = false; // Grid overlay feature currently disabled
+  const gridVisible = false;
   const mapRef = useRef<LeafletMap | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
+  const [coverageCalcPosition, setCoverageCalcPosition] = useState<LatLng | null>(null);
+  const [coverageCalcGridSquare, setCoverageCalcGridSquare] = useState<string | null>(null);
 
-  // Dock state
-  const [gridInfo, setGridInfo] = useState<GridInfo | null>(null);
+  const { data: elevation, isLoading: elevationLoading, error: elevationError } = useElevation(markerPosition);
 
-  // Use React Query for elevation caching
-  const { data: elevation, isLoading: elevationLoading, error: elevationError } = useElevation(gridInfo?.locator || null);
-
-  // Get initial position from URL or use default
   const initialState = useMemo(() => {
     const urlState = getMapStateFromURL();
-
     if (urlState) {
       return {
         center: [urlState.center.lat, urlState.center.lng] as [number, number],
         zoom: urlState.zoom,
       };
     }
-    // Default fallback when no qth parameter
     return {
-      center: [39.8283, -98.5795] as [number, number],
-      zoom: 4,
+      center: [41.0082, 28.9784] as [number, number],
+      zoom: 6,
     };
   }, []);
 
   const defaultCenter = initialState.center;
   const defaultZoom = initialState.zoom;
-
-  // Get qth from URL to pass to LocationMarker
   const params = new URLSearchParams(window.location.search);
   const initialQth = params.get('qth');
 
-  // Handle grid selection (from click or URL)
   const handleGridSelect = (info: GridInfo) => {
-    setGridInfo(info);
-    // Elevation is now automatically fetched and cached by React Query
+    setMarkerPosition(info.center);
   };
 
-  // Use map search hook
-  const { handleSearch } = useMapSearch({
-    mapRef,
-    onGridSelect: handleGridSelect,
-  });
+  const handleMarkerMove = (position: LatLng) => {
+    setMarkerPosition(position);
+  };
 
-  // Use geolocation hook
+  const handleClearSelection = () => {
+    setMarkerPosition(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('qth');
+    window.history.replaceState({}, '', url.toString());
+  };
+
+  const { handleSearch } = useMapSearch({ mapRef, onGridSelect: handleGridSelect });
   const { getCurrentLocation, isLocating, error: geolocationError, clearError } = useGeolocation();
+  const {
+    calculateCoverage,
+    isCalculating: isCoverageCalculating,
+    progress: coverageProgress,
+    error: coverageError,
+    coverageDataList,
+    clearCoverage,
+    clearError: clearCoverageError,
+  } = useCoverage();
 
-  // Handle get current location
+  const handleGetCoverage = (antennaHeight: number) => {
+    if (!markerPosition) return;
+    const fullPrecisionGrid = latLngToMaidenhead(markerPosition.lat, markerPosition.lng, 10);
+    setCoverageCalcPosition(markerPosition);
+    setCoverageCalcGridSquare(fullPrecisionGrid);
+    calculateCoverage(markerPosition, antennaHeight, fullPrecisionGrid);
+  };
+
+  useEffect(() => {
+    if (!isCoverageCalculating) {
+      setCoverageCalcPosition(null);
+      setCoverageCalcGridSquare(null);
+    }
+  }, [isCoverageCalculating]);
+
   const handleGetCurrentLocation = async () => {
     const location = await getCurrentLocation();
     if (!location || !mapRef.current) return;
 
-    const zoom = 13; // Good detail level for viewing grid squares
+    const zoom = 18;
     const precision = getPrecisionForZoom(zoom);
     const gridSquare = latLngToMaidenhead(location.lat, location.lng, precision);
-
-    // Update URL
     updateURLWithMapState(location, zoom, gridSquare);
-
-    // Pan/zoom map with smooth animation
     mapRef.current.flyTo([location.lat, location.lng], zoom);
-
-    // Update grid info (triggers elevation fetch automatically)
-    handleGridSelect({
-      locator: gridSquare,
-      center: location,
-    });
+    handleGridSelect({ locator: gridSquare, center: location });
   };
 
   return (
@@ -120,18 +134,30 @@ export function Map({ onLocationClick }: MapProps) {
           </LayersControl.Overlay>
         </LayersControl>
         <GridSquareOverlay visible={gridVisible} />
+        <CoverageOverlay
+          coverageDataList={coverageDataList}
+          currentMarkerPosition={markerPosition}
+          onClearCoverage={clearCoverage}
+          isCalculating={isCoverageCalculating}
+          calculatingPosition={coverageCalcPosition}
+          calculatingGridSquare={coverageCalcGridSquare}
+          calculatingProgress={coverageProgress?.percentage}
+        />
         <LocationMarker
           onLocationClick={onLocationClick}
           onGridSelect={handleGridSelect}
+          onMarkerMove={handleMarkerMove}
+          onClearSelection={handleClearSelection}
           initialQth={initialQth}
+          elevation={elevation ?? null}
+          elevationLoading={elevationLoading}
+          elevationError={elevationError ? 'Unable to fetch elevation' : null}
+          onGetCoverage={handleGetCoverage}
+          isCoverageCalculating={isCoverageCalculating}
+          coverageProgress={coverageProgress}
         />
       </MapContainer>
       <DockPanel
-        gridSquare={gridInfo?.locator || null}
-        coordinates={gridInfo?.center || null}
-        elevation={elevation ?? null}
-        elevationLoading={elevationLoading}
-        elevationError={elevationError ? 'Unable to fetch elevation' : null}
         onSearch={handleSearch}
         onGetCurrentLocation={handleGetCurrentLocation}
         isLocating={isLocating}
@@ -139,6 +165,7 @@ export function Map({ onLocationClick }: MapProps) {
         onClearGeolocationError={clearError}
         visible={true}
       />
+      <Toast message={coverageError} onClose={clearCoverageError} />
     </>
   );
 }
