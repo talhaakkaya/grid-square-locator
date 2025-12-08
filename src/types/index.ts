@@ -46,7 +46,7 @@ export interface CoverageData {
   rays: CoverageRay[];      // 360 rays, one per degree
   calculatedAt: number;     // Timestamp for cache invalidation
   gridSquare?: string;      // Grid square label for the center
-  colorIndex: number;       // Index for color scheme
+  colorIndex?: number;      // Deprecated - color now based on array index
 }
 
 export interface CoverageProgress {

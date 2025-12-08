@@ -99,10 +99,10 @@ export function CoverageOverlay({
         </Marker>
       )}
 
-      {coverageDataList.map((coverageData) => {
+      {coverageDataList.map((coverageData, index) => {
         // Calculate max distance for this coverage
         const maxDistance = Math.max(...coverageData.rays.map((r) => r.distance), 1);
-        const { center, rays, colorIndex } = coverageData;
+        const { center, rays } = coverageData;
 
         return rays.map((ray) => (
           <Polyline
@@ -112,7 +112,7 @@ export function CoverageOverlay({
               [ray.endpoint.lat, ray.endpoint.lng],
             ]}
             pathOptions={{
-              color: getColorForDistance(ray.distance, maxDistance, colorIndex),
+              color: getColorForDistance(ray.distance, maxDistance, index),
               weight: 2,
               opacity: 0.7,
             }}

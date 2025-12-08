@@ -6,7 +6,7 @@ import {
   calculateLOSDistance,
   calculateRayEndpoint,
 } from '../utils/losCalculation';
-import { LOS_CONFIG, COVERAGE_COLORS } from '../utils/constants';
+import { LOS_CONFIG } from '../utils/constants';
 
 interface UseCoverageReturn {
   calculateCoverage: (center: LatLng, antennaHeight: number, gridSquare?: string) => void;
@@ -31,7 +31,6 @@ export function useCoverage(): UseCoverageReturn {
   const [coverageDataList, setCoverageDataList] = useState<CoverageData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const nextColorIndexRef = useRef(0);
 
   const calculateCoverage = useCallback(async (center: LatLng, antennaHeight: number, gridSquare?: string) => {
     // Cancel any existing calculation
@@ -41,10 +40,6 @@ export function useCoverage(): UseCoverageReturn {
 
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
-
-    // Get next color index and increment
-    const colorIndex = nextColorIndexRef.current;
-    nextColorIndexRef.current = (nextColorIndexRef.current + 1) % COVERAGE_COLORS.length;
 
     setIsCalculating(true);
     setError(null);
@@ -107,7 +102,6 @@ export function useCoverage(): UseCoverageReturn {
         rays,
         calculatedAt: Date.now(),
         gridSquare,
-        colorIndex,
       };
 
       setCoverageDataList((prev) => [...prev, result]);
@@ -144,7 +138,6 @@ export function useCoverage(): UseCoverageReturn {
     setCoverageDataList([]);
     setProgress(null);
     setError(null);
-    nextColorIndexRef.current = 0; // Reset color index
   }, []);
 
   const clearError = useCallback(() => {
