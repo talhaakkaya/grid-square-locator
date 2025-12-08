@@ -322,6 +322,7 @@
 
 .coverage-origin-tooltip::before {
   border-top-color: rgba(25, 118, 210, 0.9) !important;
+  bottom: -19px !important;
 }
 
 .coverage-origin-tooltip .leaflet-tooltip-pane {
