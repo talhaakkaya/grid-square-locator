@@ -46,9 +46,11 @@ export function Map({ onLocationClick }: MapProps) {
   const defaultZoom = initialState.zoom;
   const params = new URLSearchParams(window.location.search);
   const initialQth = params.get('qth');
+  const [selectedQth, setSelectedQth] = useState<string | null>(initialQth);
 
   const handleGridSelect = (info: GridInfo) => {
     setMarkerPosition(info.center);
+    setSelectedQth(info.locator);
   };
 
   const handleMarkerMove = (position: LatLng) => {
@@ -57,6 +59,7 @@ export function Map({ onLocationClick }: MapProps) {
 
   const handleClearSelection = () => {
     setMarkerPosition(null);
+    setSelectedQth(null);
     const url = new URL(window.location.href);
     url.searchParams.delete('qth');
     window.history.replaceState({}, '', url.toString());
@@ -148,7 +151,7 @@ export function Map({ onLocationClick }: MapProps) {
           onGridSelect={handleGridSelect}
           onMarkerMove={handleMarkerMove}
           onClearSelection={handleClearSelection}
-          initialQth={initialQth}
+          initialQth={selectedQth}
           elevation={elevation ?? null}
           elevationLoading={elevationLoading}
           elevationError={elevationError ? 'Unable to fetch elevation' : null}

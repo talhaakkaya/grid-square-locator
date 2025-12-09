@@ -29,12 +29,12 @@ export function useMapSearch({ mapRef, onGridSelect }: UseMapSearchProps) {
       const coords = parseCoordinates(query);
       if (coords) {
         const center: LatLng = coords;
-        const precision: GridPrecision = 6; // Use subsquare precision for coordinate searches
+        const precision: GridPrecision = 10;
         const zoom = getZoomForPrecision(precision);
         const gridSquare = latLngToMaidenhead(center.lat, center.lng, precision);
 
-        // Update URL
-        updateURLWithMapState(center, zoom);
+        // Update URL with grid square
+        updateURLWithMapState(center, zoom, gridSquare);
 
         // Fly to location
         if (mapRef.current) {
@@ -89,12 +89,12 @@ export function useMapSearch({ mapRef, onGridSelect }: UseMapSearchProps) {
             lng: parseFloat(result.lon),
           };
 
-          const precision: GridPrecision = 6; // Match search results precision
+          const precision: GridPrecision = 10;
           const zoom = getZoomForPrecision(precision);
           const gridSquare = latLngToMaidenhead(center.lat, center.lng, precision);
 
-          // Update URL
-          updateURLWithMapState(center, zoom);
+          // Update URL with grid square
+          updateURLWithMapState(center, zoom, gridSquare);
 
           // Fly to location
           if (mapRef.current) {

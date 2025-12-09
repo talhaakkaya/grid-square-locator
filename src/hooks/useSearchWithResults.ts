@@ -39,7 +39,7 @@ export function useSearchWithResults(searchQuery: string) {
           // Coordinate search - parse and show confirmation
           const coords = parseCoordinates(searchQuery.trim());
           if (coords) {
-            const grid = latLngToMaidenhead(coords.lat, coords.lng, 6);
+            const grid = latLngToMaidenhead(coords.lat, coords.lng, 10);
             setSearchResults([{
               id: 'coords-1',
               type: 'grid',
@@ -75,7 +75,7 @@ export function useSearchWithResults(searchQuery: string) {
           const searchResultList: SearchResult[] = results.map((result, index) => {
             const lat = parseFloat(result.lat);
             const lng = parseFloat(result.lon);
-            const grid = latLngToMaidenhead(lat, lng, 6);
+            const grid = latLngToMaidenhead(lat, lng, 10);
 
             return {
               id: `location-${index}`,
