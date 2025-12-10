@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
-import type { LatLng, CoverageData, CoverageProgress, CoverageRay } from '../types';
+import type { LatLng, CoverageData, CoverageProgress, CoverageRay, VisiblePoint } from '../types';
 import { getElevationBatch, getElevationsWithThrottling } from '../services/elevationService';
 import {
   flattenSamplePoints,
-  calculateLOSDistance,
+  calculateVisiblePoints,
   calculateRayEndpoint,
 } from '../utils/losCalculation';
 import { LOS_CONFIG } from '../utils/constants';
@@ -79,18 +79,22 @@ export function useCoverage(): UseCoverageReturn {
           .slice(startIdx, endIdx)
           .map((e) => e.elevation);
 
-        const losDistance = calculateLOSDistance(
+        const { visibleDistances, maxDistance } = calculateVisiblePoints(
           observerElevation,
           antennaHeight,
           elevationProfile
         );
 
-        const endpoint = calculateRayEndpoint(center, bearing, losDistance);
+        // Convert visible distances to LatLng positions
+        const visiblePoints: VisiblePoint[] = visibleDistances.map(distance => ({
+          distance,
+          position: calculateRayEndpoint(center, bearing, distance),
+        }));
 
         rays.push({
           bearing,
-          distance: losDistance,
-          endpoint,
+          visiblePoints,
+          maxDistance,
         });
       }
 

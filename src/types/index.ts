@@ -33,10 +33,15 @@ export interface NominatimResult {
 }
 
 // LOS Coverage Types
+export interface VisiblePoint {
+  distance: number;     // Distance from observer in km
+  position: LatLng;     // Geographic coordinates
+}
+
 export interface CoverageRay {
-  bearing: number;      // 0-359 degrees
-  distance: number;     // LOS distance in km (0-200)
-  endpoint: LatLng;     // Calculated endpoint coordinates
+  bearing: number;           // 0-359 degrees
+  visiblePoints: VisiblePoint[];  // All visible points along this radial
+  maxDistance: number;       // Furthest visible distance (for color scaling)
 }
 
 export interface CoverageData {

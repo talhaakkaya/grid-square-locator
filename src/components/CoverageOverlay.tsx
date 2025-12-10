@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Polyline, Marker, Tooltip } from 'react-leaflet';
+import { useMemo, useEffect, useRef } from 'react';
+import { Marker, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Loader2, X } from 'lucide-react';
 import type { CoverageData } from '../types';
@@ -46,6 +46,115 @@ const loadingIcon = L.divIcon({
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 });
+
+/**
+ * Build analysis URL for a point pair
+ */
+function buildAnalysisUrl(
+  originLat: number,
+  originLon: number,
+  originHeight: number,
+  targetLat: number,
+  targetLon: number
+): string {
+  const points = [
+    { id: "1", lat: originLat, lon: originLon, name: "Point A", height: originHeight },
+    { id: "2", lat: targetLat, lon: targetLon, name: "Point B", height: 0 }
+  ];
+  const encoded = btoa(JSON.stringify(points));
+  return `http://dev.local:3001/?p=${encodeURIComponent(encoded)}&from=1&to=2&sel=1%2C2&hl=0&pv=1&los=1&freq=145.5`;
+}
+
+/**
+ * Component that renders coverage points using native Leaflet canvas for performance
+ */
+function CoveragePointsLayer({ coverageDataList }: { coverageDataList: CoverageData[] }) {
+  const map = useMap();
+  const layerRef = useRef<L.LayerGroup | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    // Remove old layer
+    if (layerRef.current) {
+      map.removeLayer(layerRef.current);
+    }
+
+    if (coverageDataList.length === 0) {
+      return;
+    }
+
+    // Create canvas renderer for performance
+    const renderer = L.canvas({ padding: 0.5 });
+    const layerGroup = L.layerGroup();
+
+    coverageDataList.forEach((coverage, coverageIndex) => {
+      // Calculate overall max distance for color scaling
+      const overallMaxDistance = Math.max(
+        ...coverage.rays.map((r) => r.maxDistance),
+        1
+      );
+
+      coverage.rays.forEach((ray) => {
+        ray.visiblePoints.forEach((point) => {
+          const marker = L.circleMarker(
+            [point.position.lat, point.position.lng],
+            {
+              renderer,
+              radius: 3,
+              fillColor: getColorForDistance(point.distance, overallMaxDistance, coverageIndex),
+              fillOpacity: 0.5,
+              stroke: false,
+            }
+          );
+
+          // Add click handler for popup with analysis link
+          marker.on('click', (e) => {
+            // Stop event from propagating to map (prevents new marker placement)
+            L.DomEvent.stopPropagation(e);
+
+            const url = buildAnalysisUrl(
+              coverage.center.lat,
+              coverage.center.lng,
+              coverage.antennaHeight,
+              point.position.lat,
+              point.position.lng
+            );
+
+            L.popup()
+              .setLatLng([point.position.lat, point.position.lng])
+              .setContent(`
+                <div style="text-align: center; padding: 4px;">
+                  <div style="margin-bottom: 8px; font-size: 12px; color: #666;">
+                    Distance: ${point.distance.toFixed(1)} km
+                  </div>
+                  <a href="${url}" target="_blank" rel="noopener noreferrer"
+                     style="display: inline-block; padding: 6px 12px; background: #4CAF50; color: white;
+                            text-decoration: none; border-radius: 4px; font-size: 12px;">
+                    Detailed Analysis
+                  </a>
+                </div>
+              `)
+              .openOn(map);
+          });
+
+          layerGroup.addLayer(marker);
+        });
+      });
+    });
+
+    layerGroup.addTo(map);
+    layerRef.current = layerGroup;
+
+    return () => {
+      if (layerRef.current) {
+        map.removeLayer(layerRef.current);
+      }
+    };
+  }, [map, coverageDataList]);
+
+  return null;
+}
 
 export function CoverageOverlay({
   coverageDataList,
@@ -99,26 +208,8 @@ export function CoverageOverlay({
         </Marker>
       )}
 
-      {coverageDataList.map((coverageData, index) => {
-        // Calculate max distance for this coverage
-        const maxDistance = Math.max(...coverageData.rays.map((r) => r.distance), 1);
-        const { center, rays } = coverageData;
-
-        return rays.map((ray) => (
-          <Polyline
-            key={`${coverageData.id}-ray-${ray.bearing}`}
-            positions={[
-              [center.lat, center.lng],
-              [ray.endpoint.lat, ray.endpoint.lng],
-            ]}
-            pathOptions={{
-              color: getColorForDistance(ray.distance, maxDistance, index),
-              weight: 2,
-              opacity: 0.7,
-            }}
-          />
-        ));
-      })}
+      {/* Coverage points rendered via canvas */}
+      <CoveragePointsLayer coverageDataList={coverageDataList} />
 
       {coveragesWithMovedStatus.map(({ coverage, markerHasMoved }) => {
         if (!coverage.gridSquare || !markerHasMoved) return null;

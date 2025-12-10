@@ -167,6 +167,55 @@ export function calculateRayEndpoint(
 }
 
 /**
+ * Result of visible points calculation
+ */
+export interface VisibilityResult {
+  visibleDistances: number[];  // Array of distances (km) that are visible
+  maxDistance: number;         // Furthest visible distance
+}
+
+/**
+ * Calculate ALL visible points along a radial
+ * Returns array of distances where terrain is visible from observer
+ * @param observerElevation Observer's ground elevation in meters
+ * @param antennaHeight Antenna height above ground in meters
+ * @param elevationProfile Array of terrain elevations at each sample point
+ * @param intervalKm Distance between sample points
+ * @returns Object with array of visible distances and max distance
+ */
+export function calculateVisiblePoints(
+  observerElevation: number,
+  antennaHeight: number,
+  elevationProfile: number[],
+  intervalKm: number = LOS_CONFIG.SAMPLE_INTERVAL_KM
+): VisibilityResult {
+  const observerHeight = observerElevation + antennaHeight;
+  const visibleDistances: number[] = [];
+  let cumulativeMaxAngle = -Infinity;
+  let maxDistance = 0;
+
+  for (let i = 0; i < elevationProfile.length; i++) {
+    const distance = (i + 1) * intervalKm;
+    const distanceM = distance * 1000;
+    const curvatureDrop = calculateEarthCurvatureDrop(distance);
+    const targetElevation = elevationProfile[i];
+
+    const effectiveTerrainHeight = targetElevation - curvatureDrop;
+    const heightDiff = effectiveTerrainHeight - observerHeight;
+    const angleToTerrain = Math.atan2(heightDiff, distanceM);
+
+    // Point is visible if its angle is at or above the cumulative horizon
+    if (angleToTerrain >= cumulativeMaxAngle) {
+      visibleDistances.push(distance);
+      maxDistance = distance;
+      cumulativeMaxAngle = angleToTerrain;
+    }
+  }
+
+  return { visibleDistances, maxDistance };
+}
+
+/**
  * Generate all sample points for all bearings (for batch fetching)
  * @param origin Observer location
  * @param bearings Array of bearings to calculate (default 0-359)
