@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, LayersControl } from 'react-leaflet';
+import L from 'leaflet';
 import type { Map as LeafletMap } from 'leaflet';
 import { LocationMarker, type GridInfo } from './LocationMarker';
 import { GridSquareOverlay } from './GridSquareOverlay';
@@ -7,7 +8,7 @@ import { CoverageOverlay } from './CoverageOverlay';
 import { SearchControl } from './SearchControl';
 import { DockPanel } from './DockPanel';
 import { Toast } from './Toast';
-import { getMapStateFromURL, updateURLWithMapState, getCoverageParamsFromURL, updateURLWithCoverage, clearMapStateFromURL } from '../utils/urlParams';
+import { getMapStateFromURL, updateURLWithMapState, updateURLWithCoverage, clearMapStateFromURL, getAntennaHeightFromURL } from '../utils/urlParams';
 import { latLngToMaidenhead, getPrecisionForZoom } from '../utils/maidenhead';
 import { useElevation } from '../hooks/useElevation';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -47,10 +48,6 @@ export function Map({ onLocationClick }: MapProps) {
   const defaultCenter = initialState.center;
   const defaultZoom = initialState.zoom;
   const [selectedQth, setSelectedQth] = useState<string | null>(initialState.gridSquare);
-
-  // Coverage auto-start params from URL
-  const coverageParams = useMemo(() => getCoverageParamsFromURL(), []);
-  const [autoCoverageTriggered, setAutoCoverageTriggered] = useState(false);
 
   const handleGridSelect = (info: GridInfo) => {
     setMarkerPosition(info.center);
@@ -96,21 +93,27 @@ export function Map({ onLocationClick }: MapProps) {
     }
   }, [isCoverageCalculating]);
 
-  // Auto-trigger coverage calculation from URL params
+  // Fit map to coverage bounds when new coverage is added
+  const prevCoverageCountRef = useRef(coverageDataList.length);
   useEffect(() => {
-    if (!coverageParams || !markerPosition || autoCoverageTriggered || isCoverageCalculating) return;
+    if (coverageDataList.length > prevCoverageCountRef.current && mapRef.current) {
+      const latestCoverage = coverageDataList[coverageDataList.length - 1];
+      const allPoints: [number, number][] = [];
 
-    // Small delay to ensure marker is fully rendered
-    const timer = setTimeout(() => {
-      setAutoCoverageTriggered(true);
-      const fullPrecisionGrid = latLngToMaidenhead(markerPosition.lat, markerPosition.lng, 10);
-      setCoverageCalcPosition(markerPosition);
-      setCoverageCalcGridSquare(fullPrecisionGrid);
-      calculateCoverage(markerPosition, coverageParams.antennaHeight, fullPrecisionGrid);
-    }, 500);
+      // Collect all visible points from the latest coverage
+      for (const ray of latestCoverage.rays) {
+        for (const point of ray.visiblePoints) {
+          allPoints.push([point.position.lat, point.position.lng]);
+        }
+      }
 
-    return () => clearTimeout(timer);
-  }, [coverageParams, markerPosition, autoCoverageTriggered, isCoverageCalculating, calculateCoverage]);
+      if (allPoints.length > 0) {
+        const bounds = L.latLngBounds(allPoints);
+        mapRef.current.fitBounds(bounds, { padding: [20, 20], duration: 1 });
+      }
+    }
+    prevCoverageCountRef.current = coverageDataList.length;
+  }, [coverageDataList]);
 
   const handleGetCurrentLocation = async () => {
     const location = await getCurrentLocation();
@@ -119,7 +122,7 @@ export function Map({ onLocationClick }: MapProps) {
     const zoom = 18;
     const precision = getPrecisionForZoom(zoom);
     const gridSquare = latLngToMaidenhead(location.lat, location.lng, precision);
-    updateURLWithMapState(location, zoom, gridSquare);
+    updateURLWithMapState(location, zoom, getAntennaHeightFromURL() ?? 25, gridSquare);
     mapRef.current.flyTo([location.lat, location.lng], zoom);
     handleGridSelect({ locator: gridSquare, center: location });
   };
@@ -180,7 +183,6 @@ export function Map({ onLocationClick }: MapProps) {
           onMarkerMove={handleMarkerMove}
           onClearSelection={handleClearSelection}
           initialQth={selectedQth}
-          skipInitialPopup={!!coverageParams}
           elevation={elevation ?? null}
           elevationLoading={elevationLoading}
           elevationError={elevationError ? 'Unable to fetch elevation' : null}
@@ -194,6 +196,14 @@ export function Map({ onLocationClick }: MapProps) {
           geolocationError={geolocationError}
           onClearGeolocationError={clearError}
           onResultSelect={(result) => {
+            const precision = result.gridSquare.length as 2 | 4 | 6 | 8 | 10;
+            const zoom = precision === 2 ? 4 : precision === 4 ? 7 : precision === 6 ? 11 : precision === 8 ? 15 : 18;
+            updateURLWithMapState(
+              { lat: result.lat, lng: result.lng },
+              zoom,
+              getAntennaHeightFromURL() ?? 25,
+              result.gridSquare
+            );
             handleGridSelect({
               locator: result.gridSquare,
               center: { lat: result.lat, lng: result.lng },

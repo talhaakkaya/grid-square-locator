@@ -1,5 +1,6 @@
 import type { NominatimResult } from '../types';
 import { API_CONFIG, CACHE_DURATIONS, CACHE_KEYS } from '../utils/constants';
+import { delay } from '../utils/async';
 
 const USER_AGENT = 'GridSquareLocator/1.0';
 
@@ -62,8 +63,8 @@ async function rateLimit(): Promise<void> {
   const timeSinceLastRequest = now - lastRequestTime;
 
   if (timeSinceLastRequest < API_CONFIG.NOMINATIM_RATE_LIMIT) {
-    const delay = API_CONFIG.NOMINATIM_RATE_LIMIT - timeSinceLastRequest;
-    await new Promise((resolve) => setTimeout(resolve, delay));
+    const waitTime = API_CONFIG.NOMINATIM_RATE_LIMIT - timeSinceLastRequest;
+    await delay(waitTime);
   }
 
   lastRequestTime = Date.now();

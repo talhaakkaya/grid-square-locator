@@ -1,17 +1,17 @@
 import type { LatLng } from '../types';
 import { latLngToMaidenhead, maidenheadToBounds, getZoomForPrecision } from './maidenhead';
+import { getBoundsCenter } from './geoUtils';
 import type { GridPrecision } from '../types';
 
 /**
  * URL Parameter System:
  *
- * ?qth=KN41kb - Navigation/click: shows grid square on map
- * ?grid=KN41kb&ant=25 - Coverage link: auto-starts coverage calculation
- * ?grid=KN41kb (no ant) - Treated same as qth, just navigation
+ * ?qth=KN41kb - Navigation: shows grid square on map
+ * ?qth=KN41kb&ant=25 - Coverage link with antenna height
  *
  * Flow:
  * - Click on map → updates to ?qth=...
- * - Start coverage → updates to ?grid=...&ant=...
+ * - Start coverage → adds &ant=... to URL
  * - Clear selection → removes all params
  */
 
@@ -23,16 +23,11 @@ interface MapState {
 
 /**
  * Get map state from URL parameters
- * Supports both 'qth' and 'grid' params for navigation
  * @returns Map state if parameters exist, null otherwise
  */
 export function getMapStateFromURL(): MapState | null {
   const params = new URLSearchParams(window.location.search);
-
-  // Check which param is used
-  const qthParam = params.get('qth');
-  const gridParam = params.get('grid');
-  const gridSquare = qthParam || gridParam;
+  const gridSquare = params.get('qth');
 
   if (!gridSquare) {
     return null;
@@ -40,20 +35,9 @@ export function getMapStateFromURL(): MapState | null {
 
   try {
     const bounds = maidenheadToBounds(gridSquare);
-    const center = {
-      lat: (bounds.southwest.lat + bounds.northeast.lat) / 2,
-      lng: (bounds.southwest.lng + bounds.northeast.lng) / 2,
-    };
-
-    // Determine zoom based on grid square precision
+    const center = getBoundsCenter(bounds);
     const precision = gridSquare.length as GridPrecision;
-    let zoom = getZoomForPrecision(precision);
-
-    // For coverage URLs (grid param), use a more zoomed-out view
-    // to better see the coverage area
-    if (gridParam && zoom > 12) {
-      zoom = 12;
-    }
+    const zoom = getZoomForPrecision(precision);
 
     return { center, zoom, gridSquare: gridSquare.toUpperCase() };
   } catch (error) {
@@ -66,9 +50,10 @@ export function getMapStateFromURL(): MapState | null {
  * Update URL with current map state
  * @param center Map center coordinates
  * @param zoom Map zoom level
+ * @param antennaHeight Antenna height in meters
  * @param gridSquare Optional exact grid square to use (skips calculation)
  */
-export function updateURLWithMapState(center: LatLng, zoom: number, gridSquare?: string): void {
+export function updateURLWithMapState(center: LatLng, zoom: number, antennaHeight: number, gridSquare?: string): void {
   let qthValue: string;
 
   if (gridSquare) {
@@ -87,6 +72,7 @@ export function updateURLWithMapState(center: LatLng, zoom: number, gridSquare?:
 
   const params = new URLSearchParams();
   params.set('qth', qthValue);
+  params.set('ant', antennaHeight.toString());
 
   const newURL = `${window.location.pathname}?${params.toString()}`;
 
@@ -102,28 +88,15 @@ export function clearMapStateFromURL(): void {
 }
 
 /**
- * Coverage URL parameters for shareable links
+ * Get antenna height from URL parameters
+ * @returns Antenna height if present, null otherwise
  */
-export interface CoverageUrlParams {
-  gridSquare: string;
-  antennaHeight: number;
-}
-
-/**
- * Get coverage parameters from URL for auto-start feature
- * URL format: ?grid=KN41kb36qb&ant=25
- * @returns Coverage params if grid parameter exists, null otherwise
- */
-export function getCoverageParamsFromURL(): CoverageUrlParams | null {
+export function getAntennaHeightFromURL(): number | null {
   const params = new URLSearchParams(window.location.search);
-  const grid = params.get('grid');
-
-  if (!grid) return null;
-
   const ant = params.get('ant');
-  const antennaHeight = ant ? parseInt(ant, 10) : 25; // Default 25m
-
-  return { gridSquare: grid, antennaHeight };
+  if (!ant) return null;
+  const height = parseInt(ant, 10);
+  return isNaN(height) ? null : height;
 }
 
 /**
@@ -133,9 +106,7 @@ export function getCoverageParamsFromURL(): CoverageUrlParams | null {
  */
 export function updateURLWithCoverage(gridSquare: string, antennaHeight: number): void {
   const url = new URL(window.location.href);
-  url.searchParams.set('grid', gridSquare.toLowerCase());
+  url.searchParams.set('qth', gridSquare.toLowerCase());
   url.searchParams.set('ant', antennaHeight.toString());
-  // Remove legacy qth param if present
-  url.searchParams.delete('qth');
   window.history.replaceState({}, '', url.toString());
 }

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Rectangle, useMap, useMapEvents } from 'react-leaflet';
 import type { LatLngBounds } from 'leaflet';
 import { getPrecisionForZoom } from '../utils/maidenhead';
+import { boundsToLeafletArray } from '../utils/geoUtils';
 import { getVisibleGridSquares } from '../utils/gridBounds';
 import type { GridSquareInfo, GridPrecision } from '../types';
 
@@ -65,16 +66,10 @@ export function GridSquareOverlay({ visible = true }: GridSquareOverlayProps) {
 
   return (
     <>
-      {gridSquares.map((square: GridSquareInfo, index: number) => {
-        const bounds: [[number, number], [number, number]] = [
-          [square.bounds.southwest.lat, square.bounds.southwest.lng],
-          [square.bounds.northeast.lat, square.bounds.northeast.lng],
-        ];
-
-        return (
+      {gridSquares.map((square: GridSquareInfo, index: number) => (
           <Rectangle
             key={`${square.locator}-${index}`}
-            bounds={bounds}
+            bounds={boundsToLeafletArray(square.bounds)}
             pathOptions={{
               color: color,
               weight: 1,
@@ -82,8 +77,8 @@ export function GridSquareOverlay({ visible = true }: GridSquareOverlayProps) {
               opacity: 0.4,
             }}
           />
-        );
-      })}
+        )
+      )}
     </>
   );
 }

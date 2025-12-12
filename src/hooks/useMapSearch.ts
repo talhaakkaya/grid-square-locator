@@ -6,8 +6,9 @@ import { useCallback } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import { isValidGridSquare, normalizeGridSquare, parseCoordinates, isValidCoordinatePair } from '../utils/validation';
 import { maidenheadToBounds, latLngToMaidenhead, getZoomForPrecision } from '../utils/maidenhead';
+import { getBoundsCenter } from '../utils/geoUtils';
 import { searchLocation } from '../services/nominatimService';
-import { updateURLWithMapState } from '../utils/urlParams';
+import { updateURLWithMapState, getAntennaHeightFromURL } from '../utils/urlParams';
 import type { LatLng, GridPrecision } from '../types';
 import type { GridInfo } from '../components/LocationMarker';
 
@@ -34,7 +35,7 @@ export function useMapSearch({ mapRef, onGridSelect }: UseMapSearchProps) {
         const gridSquare = latLngToMaidenhead(center.lat, center.lng, precision);
 
         // Update URL with grid square
-        updateURLWithMapState(center, zoom, gridSquare);
+        updateURLWithMapState(center, zoom, getAntennaHeightFromURL() ?? 25, gridSquare);
 
         // Fly to location
         if (mapRef.current) {
@@ -51,10 +52,7 @@ export function useMapSearch({ mapRef, onGridSelect }: UseMapSearchProps) {
       // Handle grid square search
       try {
         const bounds = maidenheadToBounds(query);
-        const center: LatLng = {
-          lat: (bounds.southwest.lat + bounds.northeast.lat) / 2,
-          lng: (bounds.southwest.lng + bounds.northeast.lng) / 2,
-        };
+        const center = getBoundsCenter(bounds);
 
         // Determine zoom based on grid square precision
         const precision = query.length as GridPrecision;
@@ -63,7 +61,7 @@ export function useMapSearch({ mapRef, onGridSelect }: UseMapSearchProps) {
         const gridSquare = normalizeGridSquare(query);
 
         // Update URL with exact grid square
-        updateURLWithMapState(center, zoom, gridSquare);
+        updateURLWithMapState(center, zoom, getAntennaHeightFromURL() ?? 25, gridSquare);
 
         // Fly to location
         if (mapRef.current) {
@@ -94,7 +92,7 @@ export function useMapSearch({ mapRef, onGridSelect }: UseMapSearchProps) {
           const gridSquare = latLngToMaidenhead(center.lat, center.lng, precision);
 
           // Update URL with grid square
-          updateURLWithMapState(center, zoom, gridSquare);
+          updateURLWithMapState(center, zoom, getAntennaHeightFromURL() ?? 25, gridSquare);
 
           // Fly to location
           if (mapRef.current) {

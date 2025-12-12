@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { searchLocation } from '../services/nominatimService';
 import { maidenheadToBounds, latLngToMaidenhead } from '../utils/maidenhead';
+import { getBoundsCenter } from '../utils/geoUtils';
 import { isValidGridSquare, normalizeGridSquare, parseCoordinates, isValidCoordinatePair } from '../utils/validation';
 import { DEBOUNCE_DELAYS } from '../utils/constants';
 import type { SearchResult } from '../components/SearchResults';
@@ -55,16 +56,15 @@ export function useSearchWithResults(searchQuery: string) {
           // Grid square search - validate and show confirmation
           try {
             const bounds = maidenheadToBounds(searchQuery.trim());
-            const centerLat = (bounds.southwest.lat + bounds.northeast.lat) / 2;
-            const centerLng = (bounds.southwest.lng + bounds.northeast.lng) / 2;
+            const center = getBoundsCenter(bounds);
 
             setSearchResults([{
               id: 'grid-1',
               type: 'grid',
               name: normalizeGridSquare(searchQuery),
               gridSquare: normalizeGridSquare(searchQuery),
-              lat: centerLat,
-              lng: centerLng,
+              lat: center.lat,
+              lng: center.lng,
             }]);
           } catch {
             setSearchResults([]);

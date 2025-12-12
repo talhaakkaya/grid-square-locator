@@ -4,7 +4,9 @@ import L from 'leaflet';
 import { Search, X, Navigation, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { SearchResults, type SearchResult } from './SearchResults';
 import { useSearchWithResults } from '../hooks/useSearchWithResults';
+import { useLocationButtonState } from '../hooks/useLocationButtonState';
 import { maidenheadToBounds } from '../utils/maidenhead';
+import { boundsToLeafletArray } from '../utils/geoUtils';
 import './SearchControl.css';
 
 interface SearchControlProps {
@@ -27,12 +29,18 @@ export function SearchControl({
   const [showResults, setShowResults] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [locationButtonState, setLocationButtonState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Use the search hook that supports grid squares, coordinates, and locations
   const { searchResults, isSearching } = useSearchWithResults(query);
+
+  // Use the location button state hook
+  const locationButtonState = useLocationButtonState({
+    isLocating,
+    geolocationError,
+    onClearGeolocationError,
+  });
 
   // Show results when search results change
   useEffect(() => {
@@ -71,35 +79,13 @@ export function SearchControl({
     }
   }, []);
 
-  // Track location button state based on isLocating and geolocationError
-  useEffect(() => {
-    if (isLocating) {
-      setLocationButtonState('loading');
-    } else if (geolocationError) {
-      setLocationButtonState('error');
-      const timer = setTimeout(() => {
-        setLocationButtonState('idle');
-        onClearGeolocationError();
-      }, 2000);
-      return () => clearTimeout(timer);
-    } else if (locationButtonState === 'loading') {
-      setLocationButtonState('success');
-      const timer = setTimeout(() => {
-        setLocationButtonState('idle');
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLocating, geolocationError, locationButtonState, onClearGeolocationError]);
-
   const handleResultSelect = (result: SearchResult) => {
     // Get bounds for the grid square and fit to screen
     try {
       const bounds = maidenheadToBounds(result.gridSquare);
+      const leafletBounds = boundsToLeafletArray(bounds);
       map.flyToBounds(
-        L.latLngBounds(
-          [bounds.southwest.lat, bounds.southwest.lng],
-          [bounds.northeast.lat, bounds.northeast.lng]
-        ),
+        L.latLngBounds(leafletBounds[0], leafletBounds[1]),
         { duration: 1.5, padding: [20, 20] }
       );
     } catch {

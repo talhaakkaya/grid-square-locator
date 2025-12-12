@@ -1,5 +1,6 @@
 import type { ElevationData, LatLng } from '../types';
 import { API_CONFIG, CONVERSION_FACTORS, LOS_CONFIG } from '../utils/constants';
+import { delay } from '../utils/async';
 
 /**
  * Fetch elevation data from Elevation API
@@ -67,9 +68,9 @@ export async function getElevationBatch(
 
   // Handle 429 rate limiting with exponential backoff
   if (response.status === 429 && retryCount < MAX_RETRIES) {
-    const delay = BASE_DELAY_MS * Math.pow(2, retryCount);
-    console.log(`Rate limited (429), retrying in ${delay}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-    await new Promise((resolve) => setTimeout(resolve, delay));
+    const retryDelay = BASE_DELAY_MS * Math.pow(2, retryCount);
+    console.log(`Rate limited (429), retrying in ${retryDelay}ms... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+    await delay(retryDelay);
     return getElevationBatch(locations, signal, retryCount + 1);
   }
 
@@ -132,7 +133,7 @@ export async function getElevationsWithThrottling(
 
     // Small delay between batch groups to avoid overwhelming API
     if (i + maxConcurrent < batches.length) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      await delay(delayMs);
     }
   }
 

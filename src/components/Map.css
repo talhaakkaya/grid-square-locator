@@ -284,11 +284,6 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.2); }
-}
-
 .coverage-loading-tooltip {
   opacity: 0.8 !important;
 }
@@ -322,7 +317,7 @@
 
 .coverage-origin-tooltip::before,
 .coverage-loading-tooltip::before {
-  border-top-color: rgba(25, 118, 210, 0.9) !important;
+  display: none !important;
 }
 
 .leaflet-tooltip-top::before {
