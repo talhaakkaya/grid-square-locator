@@ -150,8 +150,8 @@ export function Map({ onLocationClick }: MapProps) {
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer checked name="Dark">
             <TileLayer
-              attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
-              url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               maxZoom={20}
             />
           </LayersControl.BaseLayer>
