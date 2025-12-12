@@ -8,21 +8,9 @@ import { API_CONFIG, CONVERSION_FACTORS, LOS_CONFIG } from '../utils/constants';
  */
 export async function getElevation(location: LatLng): Promise<ElevationData> {
   try {
-    const response = await fetch(API_CONFIG.ELEVATION_API_URL, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        locations: [
-          {
-            latitude: location.lat,
-            longitude: location.lng,
-          },
-        ],
-      }),
-    });
+    const locationsParam = `${location.lat},${location.lng}`;
+    const url = `${API_CONFIG.ELEVATION_API_URL}?locations=${locationsParam}`;
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error(`Elevation API error: ${response.status} ${response.statusText}`);
@@ -73,20 +61,9 @@ export async function getElevationBatch(
     return [];
   }
 
-  const response = await fetch(API_CONFIG.ELEVATION_API_URL, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      locations: locations.map((loc) => ({
-        latitude: loc.lat,
-        longitude: loc.lng,
-      })),
-    }),
-    signal,
-  });
+  const locationsParam = locations.map((loc) => `${loc.lat},${loc.lng}`).join('|');
+  const url = `${API_CONFIG.ELEVATION_API_URL}?locations=${locationsParam}`;
+  const response = await fetch(url, { signal });
 
   // Handle 429 rate limiting with exponential backoff
   if (response.status === 429 && retryCount < MAX_RETRIES) {

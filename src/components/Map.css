@@ -320,7 +320,8 @@
   white-space: nowrap !important;
 }
 
-.coverage-origin-tooltip::before {
+.coverage-origin-tooltip::before,
+.coverage-loading-tooltip::before {
   border-top-color: rgba(25, 118, 210, 0.9) !important;
 }
 
@@ -348,6 +349,7 @@
   opacity: 0.8;
 }
 
+.coverage-label-copy,
 .coverage-label-close {
   background: transparent;
   border: none;
@@ -361,6 +363,7 @@
   justify-content: center;
 }
 
+.coverage-label-copy:hover,
 .coverage-label-close:hover {
   opacity: 1;
 }

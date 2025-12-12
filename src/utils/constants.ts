@@ -51,7 +51,7 @@ export const CONVERSION_FACTORS = {
  */
 export const API_CONFIG = {
   NOMINATIM_RATE_LIMIT: 1000, // 1 request per second
-  ELEVATION_API_URL: 'https://elevation.qso.app/api/v1/lookup',
+  ELEVATION_API_URL: 'https://elevation-api.b-cdn.net/api/v1/lookup',
   NOMINATIM_API_URL: 'https://nominatim.openstreetmap.org/search',
 } as const;
 

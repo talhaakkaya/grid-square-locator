@@ -2,36 +2,60 @@ import type { LatLng } from '../types';
 import { latLngToMaidenhead, maidenheadToBounds, getZoomForPrecision } from './maidenhead';
 import type { GridPrecision } from '../types';
 
+/**
+ * URL Parameter System:
+ *
+ * ?qth=KN41kb - Navigation/click: shows grid square on map
+ * ?grid=KN41kb&ant=25 - Coverage link: auto-starts coverage calculation
+ * ?grid=KN41kb (no ant) - Treated same as qth, just navigation
+ *
+ * Flow:
+ * - Click on map → updates to ?qth=...
+ * - Start coverage → updates to ?grid=...&ant=...
+ * - Clear selection → removes all params
+ */
+
 interface MapState {
   center: LatLng;
   zoom: number;
+  gridSquare: string;
 }
 
 /**
  * Get map state from URL parameters
+ * Supports both 'qth' and 'grid' params for navigation
  * @returns Map state if parameters exist, null otherwise
  */
 export function getMapStateFromURL(): MapState | null {
   const params = new URLSearchParams(window.location.search);
 
-  const qth = params.get('qth');
+  // Check which param is used
+  const qthParam = params.get('qth');
+  const gridParam = params.get('grid');
+  const gridSquare = qthParam || gridParam;
 
-  if (!qth) {
+  if (!gridSquare) {
     return null;
   }
 
   try {
-    const bounds = maidenheadToBounds(qth);
+    const bounds = maidenheadToBounds(gridSquare);
     const center = {
       lat: (bounds.southwest.lat + bounds.northeast.lat) / 2,
       lng: (bounds.southwest.lng + bounds.northeast.lng) / 2,
     };
 
     // Determine zoom based on grid square precision
-    const precision = qth.length as GridPrecision;
-    const zoom = getZoomForPrecision(precision);
+    const precision = gridSquare.length as GridPrecision;
+    let zoom = getZoomForPrecision(precision);
 
-    return { center, zoom };
+    // For coverage URLs (grid param), use a more zoomed-out view
+    // to better see the coverage area
+    if (gridParam && zoom > 12) {
+      zoom = 12;
+    }
+
+    return { center, zoom, gridSquare: gridSquare.toUpperCase() };
   } catch (error) {
     console.error('Invalid grid square in URL:', error);
     return null;
@@ -75,4 +99,43 @@ export function updateURLWithMapState(center: LatLng, zoom: number, gridSquare?:
  */
 export function clearMapStateFromURL(): void {
   window.history.replaceState({}, '', window.location.pathname);
+}
+
+/**
+ * Coverage URL parameters for shareable links
+ */
+export interface CoverageUrlParams {
+  gridSquare: string;
+  antennaHeight: number;
+}
+
+/**
+ * Get coverage parameters from URL for auto-start feature
+ * URL format: ?grid=KN41kb36qb&ant=25
+ * @returns Coverage params if grid parameter exists, null otherwise
+ */
+export function getCoverageParamsFromURL(): CoverageUrlParams | null {
+  const params = new URLSearchParams(window.location.search);
+  const grid = params.get('grid');
+
+  if (!grid) return null;
+
+  const ant = params.get('ant');
+  const antennaHeight = ant ? parseInt(ant, 10) : 25; // Default 25m
+
+  return { gridSquare: grid, antennaHeight };
+}
+
+/**
+ * Update URL with coverage parameters for sharing
+ * @param gridSquare Grid square locator
+ * @param antennaHeight Antenna height in meters
+ */
+export function updateURLWithCoverage(gridSquare: string, antennaHeight: number): void {
+  const url = new URL(window.location.href);
+  url.searchParams.set('grid', gridSquare.toLowerCase());
+  url.searchParams.set('ant', antennaHeight.toString());
+  // Remove legacy qth param if present
+  url.searchParams.delete('qth');
+  window.history.replaceState({}, '', url.toString());
 }

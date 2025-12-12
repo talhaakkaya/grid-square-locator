@@ -27,6 +27,7 @@ interface LocationMarkerProps {
   onMarkerMove?: (position: LatLng) => void;
   onClearSelection?: () => void;
   initialQth?: string | null;
+  skipInitialPopup?: boolean;
   elevation?: number | null;
   elevationLoading?: boolean;
   elevationError?: string | null;
@@ -40,6 +41,7 @@ interface GridData {
   center: LatLng;
   markerPosition: LatLng;
   locator: string;
+  isInitial?: boolean;
 }
 
 export function LocationMarker({
@@ -48,6 +50,7 @@ export function LocationMarker({
   onMarkerMove,
   onClearSelection,
   initialQth,
+  skipInitialPopup,
   elevation,
   elevationLoading,
   elevationError,
@@ -58,6 +61,7 @@ export function LocationMarker({
   const [gridData, setGridData] = useState<GridData | null>(null);
   const markerRef = useRef<LeafletMarker | null>(null);
   const gridDataRef = useRef<GridData | null>(null);
+  const initialLoadDone = useRef(false);
 
   useEffect(() => {
     gridDataRef.current = gridData;
@@ -131,7 +135,8 @@ export function LocationMarker({
   );
 
   useEffect(() => {
-    if (!initialQth) return;
+    if (!initialQth || initialLoadDone.current) return;
+    initialLoadDone.current = true;
     try {
       const bounds = maidenheadToBounds(initialQth);
       const gridBounds: [[number, number], [number, number]] = [
@@ -143,13 +148,15 @@ export function LocationMarker({
         lng: (bounds.southwest.lng + bounds.northeast.lng) / 2,
       };
       const locator = initialQth.toUpperCase();
-      const newGridData = { bounds: gridBounds, center, markerPosition: center, locator };
+      const newGridData = { bounds: gridBounds, center, markerPosition: center, locator, isInitial: true };
       setGridData(newGridData);
       gridDataRef.current = newGridData;
 
       onGridSelectRef.current?.({ locator, center });
       onMarkerMoveRef.current?.(center);
-      setTimeout(() => markerRef.current?.openPopup(), 300);
+      if (!skipInitialPopup) {
+        setTimeout(() => markerRef.current?.openPopup(), 300);
+      }
     } catch (error) {
       console.error('Error loading initial grid square:', error);
     }
@@ -191,7 +198,7 @@ export function LocationMarker({
         [gridInfo.bounds.northeast.lat, gridInfo.bounds.northeast.lng],
       ];
       const center: LatLng = { lat: gridInfo.bounds.center.lat, lng: gridInfo.bounds.center.lng };
-      const newGridData = { bounds, center, markerPosition: center, locator: gridInfo.locator };
+      const newGridData = { bounds, center, markerPosition: center, locator: gridInfo.locator, isInitial: false };
       setGridData(newGridData);
       gridDataRef.current = newGridData;
 
@@ -203,7 +210,7 @@ export function LocationMarker({
     },
   });
 
-  if (!gridData) {
+  if (!gridData || (skipInitialPopup && gridData.isInitial)) {
     return null;
   }
 

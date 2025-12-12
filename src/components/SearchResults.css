@@ -1,9 +1,9 @@
 .search-results {
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 0;
   width: 100%;
-  margin-bottom: 4px;
+  margin-top: 4px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -12,7 +12,7 @@
   overflow-y: auto;
   z-index: 1000;
   box-sizing: border-box;
-  transform-origin: bottom left;
+  transform-origin: top left;
   animation: fadeIn 0.15s ease-out;
 }
 

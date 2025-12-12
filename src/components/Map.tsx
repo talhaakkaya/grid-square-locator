@@ -4,12 +4,12 @@ import type { Map as LeafletMap } from 'leaflet';
 import { LocationMarker, type GridInfo } from './LocationMarker';
 import { GridSquareOverlay } from './GridSquareOverlay';
 import { CoverageOverlay } from './CoverageOverlay';
+import { SearchControl } from './SearchControl';
 import { DockPanel } from './DockPanel';
 import { Toast } from './Toast';
-import { getMapStateFromURL, updateURLWithMapState } from '../utils/urlParams';
+import { getMapStateFromURL, updateURLWithMapState, getCoverageParamsFromURL, updateURLWithCoverage, clearMapStateFromURL } from '../utils/urlParams';
 import { latLngToMaidenhead, getPrecisionForZoom } from '../utils/maidenhead';
 import { useElevation } from '../hooks/useElevation';
-import { useMapSearch } from '../hooks/useMapSearch';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useCoverage } from '../hooks/useCoverage';
 import type { LatLng } from '../types';
@@ -34,19 +34,23 @@ export function Map({ onLocationClick }: MapProps) {
       return {
         center: [urlState.center.lat, urlState.center.lng] as [number, number],
         zoom: urlState.zoom,
+        gridSquare: urlState.gridSquare,
       };
     }
     return {
       center: [41.0082, 28.9784] as [number, number],
       zoom: 6,
+      gridSquare: null as string | null,
     };
   }, []);
 
   const defaultCenter = initialState.center;
   const defaultZoom = initialState.zoom;
-  const params = new URLSearchParams(window.location.search);
-  const initialQth = params.get('qth');
-  const [selectedQth, setSelectedQth] = useState<string | null>(initialQth);
+  const [selectedQth, setSelectedQth] = useState<string | null>(initialState.gridSquare);
+
+  // Coverage auto-start params from URL
+  const coverageParams = useMemo(() => getCoverageParamsFromURL(), []);
+  const [autoCoverageTriggered, setAutoCoverageTriggered] = useState(false);
 
   const handleGridSelect = (info: GridInfo) => {
     setMarkerPosition(info.center);
@@ -60,15 +64,13 @@ export function Map({ onLocationClick }: MapProps) {
   const handleClearSelection = () => {
     setMarkerPosition(null);
     setSelectedQth(null);
-    const url = new URL(window.location.href);
-    url.searchParams.delete('qth');
-    window.history.replaceState({}, '', url.toString());
+    clearMapStateFromURL();
   };
 
-  const { handleSearch } = useMapSearch({ mapRef, onGridSelect: handleGridSelect });
   const { getCurrentLocation, isLocating, error: geolocationError, clearError } = useGeolocation();
   const {
     calculateCoverage,
+    cancelCalculation,
     isCalculating: isCoverageCalculating,
     progress: coverageProgress,
     error: coverageError,
@@ -83,6 +85,8 @@ export function Map({ onLocationClick }: MapProps) {
     setCoverageCalcPosition(markerPosition);
     setCoverageCalcGridSquare(fullPrecisionGrid);
     calculateCoverage(markerPosition, antennaHeight, fullPrecisionGrid);
+    // Update URL for sharing
+    updateURLWithCoverage(fullPrecisionGrid, antennaHeight);
   };
 
   useEffect(() => {
@@ -91,6 +95,22 @@ export function Map({ onLocationClick }: MapProps) {
       setCoverageCalcGridSquare(null);
     }
   }, [isCoverageCalculating]);
+
+  // Auto-trigger coverage calculation from URL params
+  useEffect(() => {
+    if (!coverageParams || !markerPosition || autoCoverageTriggered || isCoverageCalculating) return;
+
+    // Small delay to ensure marker is fully rendered
+    const timer = setTimeout(() => {
+      setAutoCoverageTriggered(true);
+      const fullPrecisionGrid = latLngToMaidenhead(markerPosition.lat, markerPosition.lng, 10);
+      setCoverageCalcPosition(markerPosition);
+      setCoverageCalcGridSquare(fullPrecisionGrid);
+      calculateCoverage(markerPosition, coverageParams.antennaHeight, fullPrecisionGrid);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [coverageParams, markerPosition, autoCoverageTriggered, isCoverageCalculating, calculateCoverage]);
 
   const handleGetCurrentLocation = async () => {
     const location = await getCurrentLocation();
@@ -130,8 +150,8 @@ export function Map({ onLocationClick }: MapProps) {
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer checked name="Dark">
             <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
+              url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
               maxZoom={20}
             />
           </LayersControl.BaseLayer>
@@ -148,6 +168,7 @@ export function Map({ onLocationClick }: MapProps) {
           coverageDataList={coverageDataList}
           currentMarkerPosition={markerPosition}
           onClearCoverage={clearCoverage}
+          onCancelCalculation={cancelCalculation}
           isCalculating={isCoverageCalculating}
           calculatingPosition={coverageCalcPosition}
           calculatingGridSquare={coverageCalcGridSquare}
@@ -159,6 +180,7 @@ export function Map({ onLocationClick }: MapProps) {
           onMarkerMove={handleMarkerMove}
           onClearSelection={handleClearSelection}
           initialQth={selectedQth}
+          skipInitialPopup={!!coverageParams}
           elevation={elevation ?? null}
           elevationLoading={elevationLoading}
           elevationError={elevationError ? 'Unable to fetch elevation' : null}
@@ -166,15 +188,20 @@ export function Map({ onLocationClick }: MapProps) {
           isCoverageCalculating={isCoverageCalculating}
           coverageProgress={coverageProgress}
         />
+        <SearchControl
+          onGetCurrentLocation={handleGetCurrentLocation}
+          isLocating={isLocating}
+          geolocationError={geolocationError}
+          onClearGeolocationError={clearError}
+          onResultSelect={(result) => {
+            handleGridSelect({
+              locator: result.gridSquare,
+              center: { lat: result.lat, lng: result.lng },
+            });
+          }}
+        />
       </MapContainer>
-      <DockPanel
-        onSearch={handleSearch}
-        onGetCurrentLocation={handleGetCurrentLocation}
-        isLocating={isLocating}
-        geolocationError={geolocationError}
-        onClearGeolocationError={clearError}
-        visible={true}
-      />
+      <DockPanel visible={true} />
       <Toast message={coverageError} onClose={clearCoverageError} />
     </>
   );

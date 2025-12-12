@@ -1,6 +1,7 @@
-import { useMemo, useEffect, useRef } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { Marker, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import type { Marker as LeafletMarker } from 'leaflet';
 import { Loader2, X } from 'lucide-react';
 import type { CoverageData } from '../types';
 import { COVERAGE_COLORS } from '../utils/constants';
@@ -9,6 +10,7 @@ interface CoverageOverlayProps {
   coverageDataList: CoverageData[];
   currentMarkerPosition: { lat: number; lng: number } | null;
   onClearCoverage: (id: string) => void;
+  onCancelCalculation?: () => void;
   visible?: boolean;
   // Loading state props
   isCalculating?: boolean;
@@ -62,7 +64,7 @@ function buildAnalysisUrl(
     { id: "2", lat: targetLat, lon: targetLon, name: "Point B", height: 0 }
   ];
   const encoded = btoa(JSON.stringify(points));
-  return `http://dev.local:3001/?p=${encodeURIComponent(encoded)}&from=1&to=2&sel=1%2C2&hl=0&pv=1&los=1&freq=145.5`;
+  return `https://rflos.qso.app/?p=${encodeURIComponent(encoded)}&from=1&to=2&sel=1%2C2&hl=0&pv=1&los=1&freq=145.5`;
 }
 
 /**
@@ -160,12 +162,46 @@ export function CoverageOverlay({
   coverageDataList,
   currentMarkerPosition,
   onClearCoverage,
+  onCancelCalculation,
   visible = true,
   isCalculating,
   calculatingPosition,
   calculatingGridSquare,
   calculatingProgress,
 }: CoverageOverlayProps) {
+  const loadingMarkerRef = useRef<LeafletMarker | null>(null);
+  const map = useMap();
+  const [showLoading, setShowLoading] = useState(false);
+
+  useEffect(() => {
+    if (isCalculating && calculatingPosition && calculatingGridSquare) {
+      const timer = setTimeout(() => setShowLoading(true), 100);
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoading(false);
+    }
+  }, [isCalculating, calculatingPosition, calculatingGridSquare]);
+
+  const handleCancelClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (loadingMarkerRef.current) {
+      const tooltip = loadingMarkerRef.current.getTooltip();
+      if (tooltip) {
+        map.closeTooltip(tooltip);
+        tooltip.remove();
+      }
+      loadingMarkerRef.current.unbindTooltip();
+      loadingMarkerRef.current.remove();
+      loadingMarkerRef.current = null;
+    }
+    const tooltipPane = map.getPane('tooltipPane');
+    if (tooltipPane) {
+      tooltipPane.innerHTML = '';
+    }
+    onCancelCalculation?.();
+  };
+
   // Check if marker has moved away from each coverage center
   const coveragesWithMovedStatus = useMemo(() => {
     if (!currentMarkerPosition) return coverageDataList.map((c) => ({ coverage: c, markerHasMoved: true }));
@@ -185,26 +221,39 @@ export function CoverageOverlay({
 
   return (
     <>
-      {/* Loading indicator - blue dot with label while calculating */}
-      {isCalculating && calculatingPosition && (
+      {showLoading && calculatingPosition && calculatingGridSquare && (
         <Marker
           position={[calculatingPosition.lat, calculatingPosition.lng]}
           icon={loadingIcon}
+          ref={loadingMarkerRef}
         >
-          {calculatingGridSquare && (
-            <Tooltip
+          <Tooltip
               permanent
               direction="top"
               offset={[0, -16]}
               className="coverage-origin-tooltip coverage-loading-tooltip"
+              interactive
             >
-              <span className="coverage-loading-content">
-                <span className="coverage-label-text">{calculatingGridSquare}</span>
+              <span
+                className="coverage-loading-content"
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <span className="coverage-label-text">
+                  {calculatingGridSquare}
+                </span>
                 <Loader2 size={12} className="coverage-loading-spinner" />
                 <span className="coverage-loading-percent">{calculatingProgress || 0}%</span>
+                <button
+                  className="coverage-label-close"
+                  onClick={handleCancelClick}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  title="Cancel calculation"
+                >
+                  <X size={12} />
+                </button>
               </span>
             </Tooltip>
-          )}
         </Marker>
       )}
 
@@ -227,23 +276,22 @@ export function CoverageOverlay({
               className="coverage-origin-tooltip"
               interactive
             >
-              <span className="coverage-label-content">
-                <span
-                  className="coverage-label-text"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(coverage.gridSquare || '');
-                  }}
-                  title="Click to copy"
-                >
+              <span
+                className="coverage-label-content"
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <span className="coverage-label-text">
                   {coverage.gridSquare}
                 </span>
                 <button
                   className="coverage-label-close"
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     onClearCoverage(coverage.id);
                   }}
+                  onMouseDown={(e) => e.stopPropagation()}
                   title="Remove this coverage"
                 >
                   <X size={12} />
