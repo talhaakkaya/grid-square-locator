@@ -127,8 +127,11 @@ function CoveragePointsLayer({ coverageDataList }: { coverageDataList: CoverageD
               .setLatLng([point.position.lat, point.position.lng])
               .setContent(`
                 <div style="text-align: center; padding: 4px;">
-                  <div style="margin-bottom: 8px; font-size: 12px; color: #666;">
+                  <div style="margin-bottom: 4px; font-size: 12px; color: #666;">
                     Distance: ${point.distance.toFixed(1)} km
+                  </div>
+                  <div style="margin-bottom: 8px; font-size: 11px; color: #888;">
+                    ${point.position.lat.toFixed(6)}, ${point.position.lng.toFixed(6)}
                   </div>
                   <a href="${url}" target="_blank" rel="noopener noreferrer"
                      style="display: inline-block; padding: 6px 12px; background: #4CAF50; color: white;

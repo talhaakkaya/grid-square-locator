@@ -62,6 +62,7 @@ export function LocationMarker({
   const markerRef = useRef<LeafletMarker | null>(null);
   const gridDataRef = useRef<GridData | null>(null);
   const initialLoadDone = useRef(false);
+  const prevInitialQth = useRef<string | null | undefined>(null);
 
   useEffect(() => {
     gridDataRef.current = gridData;
@@ -90,6 +91,7 @@ export function LocationMarker({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && gridData) {
         setGridData(null);
+        initialLoadDone.current = false;
         onClearSelectionRef.current?.();
       }
     };
@@ -99,6 +101,7 @@ export function LocationMarker({
 
   const handleClearSelection = () => {
     setGridData(null);
+    initialLoadDone.current = false;
     onClearSelectionRef.current?.();
   };
 
@@ -135,6 +138,11 @@ export function LocationMarker({
   );
 
   useEffect(() => {
+    if (initialQth !== prevInitialQth.current) {
+      initialLoadDone.current = false;
+      prevInitialQth.current = initialQth;
+    }
+
     if (!initialQth || initialLoadDone.current) return;
     initialLoadDone.current = true;
     try {
@@ -155,7 +163,7 @@ export function LocationMarker({
       onGridSelectRef.current?.({ locator, center });
       onMarkerMoveRef.current?.(center);
       if (!skipInitialPopup) {
-        setTimeout(() => markerRef.current?.openPopup(), 300);
+        setTimeout(() => markerRef.current?.openPopup(), 100);
       }
     } catch (error) {
       console.error('Error loading initial grid square:', error);
