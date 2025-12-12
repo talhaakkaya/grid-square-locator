@@ -1,7 +1,7 @@
 .search-control {
   position: fixed;
-  top: 20px;
-  left: 60px;
+  top: 10px;
+  left: 55px;
   z-index: 1000;
 }
 
@@ -11,34 +11,48 @@
   gap: 8px;
 }
 
-/* Green button base style (matches coverage button) */
+/* Leaflet-style button */
 .search-expand-button,
 .find-me-button {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 8px;
+  justify-content: center;
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  padding: 7px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s;
-  white-space: nowrap;
+  transition: background 0.2s;
+  color: black;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.search-expand-button:focus,
+.find-me-button:focus {
+  outline: none;
+}
+
+.search-expand-button svg,
+.find-me-button svg {
+  display: block;
+}
+
+.search-expand-button span,
+.find-me-text {
+  display: none;
 }
 
 .search-expand-button:hover,
 .find-me-button:hover:not(:disabled) {
-  background: #43A047;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background: #f4f4f4;
+  color: black;
+  border-color: rgba(0, 0, 0, 0.4);
 }
 
 .search-expand-button:active,
 .find-me-button:active:not(:disabled) {
-  transform: scale(0.98);
+  background: #e0e0e0;
 }
 
 .find-me-button:disabled {
@@ -47,23 +61,11 @@
 }
 
 .find-me-button.success {
-  background: #2E7D32;
-}
-
-.find-me-button.success:hover:not(:disabled) {
-  background: #256427;
+  color: #2E7D32;
 }
 
 .find-me-button.error {
-  background: #c62828;
-}
-
-.find-me-button.error:hover:not(:disabled) {
-  background: #a51d1d;
-}
-
-.find-me-text {
-  font-size: 14px;
+  color: #c62828;
 }
 
 .spinner {
@@ -105,7 +107,7 @@
 }
 
 .search-input:focus {
-  box-shadow: 0 0 0 2px #4CAF50;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4);
 }
 
 .search-close-button {
@@ -194,10 +196,6 @@
     top: 10px;
   }
 
-  .search-buttons-row {
-    flex-wrap: wrap;
-  }
-
   .search-input-wrapper {
     min-width: 200px;
     max-width: calc(100vw - 140px);
@@ -207,15 +205,5 @@
     min-width: 200px;
     max-width: calc(100vw - 20px);
     max-height: 300px;
-  }
-
-  .search-expand-button span,
-  .find-me-text {
-    display: none;
-  }
-
-  .search-expand-button,
-  .find-me-button {
-    padding: 10px;
   }
 }

@@ -18,6 +18,8 @@ interface CoverageOverlayProps {
   calculatingPosition?: { lat: number; lng: number } | null;
   calculatingGridSquare?: string | null;
   calculatingProgress?: number;
+  // Export props
+  tileLayerUrl: string;
 }
 
 const loadingIcon = L.divIcon({
@@ -37,6 +39,7 @@ export function CoverageOverlay({
   calculatingPosition,
   calculatingGridSquare,
   calculatingProgress,
+  tileLayerUrl,
 }: CoverageOverlayProps) {
   const loadingMarkerRef = useRef<LeafletMarker | null>(null);
   const map = useMap();
@@ -130,7 +133,7 @@ export function CoverageOverlay({
       {/* Coverage points rendered via canvas */}
       <CoveragePointsRenderer coverageDataList={coverageDataList} />
 
-      {coveragesWithMovedStatus.map(({ coverage, markerHasMoved }) => {
+      {coveragesWithMovedStatus.map(({ coverage, markerHasMoved }, index) => {
         if (!markerHasMoved) return null;
 
         return (
@@ -138,6 +141,8 @@ export function CoverageOverlay({
             key={`origin-${coverage.id}`}
             coverage={coverage}
             onClear={onClearCoverage}
+            tileLayerUrl={tileLayerUrl}
+            colorIndex={index}
           />
         );
       })}

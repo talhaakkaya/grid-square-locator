@@ -62,9 +62,15 @@ export async function getElevationBatch(
     return [];
   }
 
-  const locationsParam = locations.map((loc) => `${loc.lat},${loc.lng}`).join('|');
-  const url = `${API_CONFIG.ELEVATION_API_URL}?locations=${locationsParam}`;
-  const response = await fetch(url, { signal });
+  // Use POST to avoid URL length limits with large batches
+  const response = await fetch(API_CONFIG.ELEVATION_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      locations: locations.map((loc) => ({ latitude: loc.lat, longitude: loc.lng })),
+    }),
+    signal,
+  });
 
   // Handle 429 rate limiting with exponential backoff
   if (response.status === 429 && retryCount < MAX_RETRIES) {

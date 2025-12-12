@@ -345,6 +345,7 @@
 }
 
 .coverage-label-copy,
+.coverage-label-download,
 .coverage-label-close {
   background: transparent;
   border: none;
@@ -359,8 +360,14 @@
 }
 
 .coverage-label-copy:hover,
+.coverage-label-download:hover,
 .coverage-label-close:hover {
   opacity: 1;
+}
+
+.coverage-label-download:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 
 /* Mobile responsiveness */

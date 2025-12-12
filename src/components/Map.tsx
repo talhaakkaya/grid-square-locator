@@ -16,6 +16,13 @@ import { useCoverage } from '../hooks/useCoverage';
 import type { LatLng } from '../types';
 import './Map.css';
 
+// Tile layer URLs
+const TILE_URLS = {
+  osm: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+};
+
 interface MapProps {
   onLocationClick?: (location: LatLng) => void;
 }
@@ -26,6 +33,7 @@ export function Map({ onLocationClick }: MapProps) {
   const [markerPosition, setMarkerPosition] = useState<LatLng | null>(null);
   const [coverageCalcPosition, setCoverageCalcPosition] = useState<LatLng | null>(null);
   const [coverageCalcGridSquare, setCoverageCalcGridSquare] = useState<string | null>(null);
+  const [currentTileUrl, setCurrentTileUrl] = useState(TILE_URLS.dark);
 
   const { data: elevation, isLoading: elevationLoading, error: elevationError } = useElevation(markerPosition);
 
@@ -115,6 +123,33 @@ export function Map({ onLocationClick }: MapProps) {
     prevCoverageCountRef.current = coverageDataList.length;
   }, [coverageDataList]);
 
+  // Track base layer changes for export
+  useEffect(() => {
+    // Small delay to ensure map is fully initialized
+    const timer = setTimeout(() => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      const handleBaseLayerChange = (e: L.LayersControlEvent) => {
+        const layerName = e.name;
+        if (layerName === 'OpenStreetMap') {
+          setCurrentTileUrl(TILE_URLS.osm);
+        } else if (layerName === 'Satellite') {
+          setCurrentTileUrl(TILE_URLS.satellite);
+        } else if (layerName === 'Dark') {
+          setCurrentTileUrl(TILE_URLS.dark);
+        }
+      };
+
+      map.on('baselayerchange', handleBaseLayerChange);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      mapRef.current?.off('baselayerchange');
+    };
+  }, []);
+
   const handleGetCurrentLocation = async () => {
     const location = await getCurrentLocation();
     if (!location || !mapRef.current) return;
@@ -176,6 +211,7 @@ export function Map({ onLocationClick }: MapProps) {
           calculatingPosition={coverageCalcPosition}
           calculatingGridSquare={coverageCalcGridSquare}
           calculatingProgress={coverageProgress?.percentage}
+          tileLayerUrl={currentTileUrl}
         />
         <LocationMarker
           onLocationClick={onLocationClick}

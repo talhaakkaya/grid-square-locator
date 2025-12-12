@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
-import { X } from 'lucide-react';
+import { X, Download, Loader2 } from 'lucide-react';
 import type { CoverageData } from '../types';
+import { exportCoverageMap } from '../utils/mapExport';
 
 // Small dot icon for coverage origin marker
 const originIcon = L.divIcon({
@@ -14,10 +16,33 @@ const originIcon = L.divIcon({
 interface CoverageOriginMarkerProps {
   coverage: CoverageData;
   onClear: (id: string) => void;
+  tileLayerUrl: string;
+  colorIndex?: number;
 }
 
-export function CoverageOriginMarker({ coverage, onClear }: CoverageOriginMarkerProps) {
+export function CoverageOriginMarker({ coverage, onClear, tileLayerUrl, colorIndex = 0 }: CoverageOriginMarkerProps) {
+  const [isExporting, setIsExporting] = useState(false);
+
   if (!coverage.gridSquare) return null;
+
+  const handleExport = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (isExporting) return;
+
+    setIsExporting(true);
+    try {
+      await exportCoverageMap({
+        coverage,
+        tileLayerUrl,
+        colorIndex,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <Marker
@@ -39,6 +64,15 @@ export function CoverageOriginMarker({ coverage, onClear }: CoverageOriginMarker
           <span className="coverage-label-text">
             {coverage.gridSquare}
           </span>
+          <button
+            className="coverage-label-download"
+            onClick={handleExport}
+            onMouseDown={(e) => e.stopPropagation()}
+            title="Download high-quality image"
+            disabled={isExporting}
+          >
+            {isExporting ? <Loader2 size={12} className="spinner" /> : <Download size={12} />}
+          </button>
           <button
             className="coverage-label-close"
             onClick={(e) => {
