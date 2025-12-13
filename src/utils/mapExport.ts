@@ -173,7 +173,7 @@ async function drawTilesToCanvas(
   canvasWidth: number,
   canvasHeight: number
 ): Promise<void> {
-  const MAX_TILE_CANVAS = 8000; // Browser canvas size limit
+  const MAX_TILE_CANVAS = 16000; // Browser canvas size limit
 
   // Reduce zoom if tile canvas would be too large
   let actualZoom = zoom;
