@@ -8,7 +8,6 @@ interface ExportOptions {
   coverage: CoverageData;
   tileLayerUrl: string;
   width?: number;
-  height?: number;
   colorIndex?: number;
 }
 
@@ -138,6 +137,26 @@ async function fetchTile(url: string, x: number, y: number, z: number): Promise<
 function latToMercatorY(lat: number): number {
   const latRad = (lat * Math.PI) / 180;
   return Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+}
+
+/**
+ * Calculate aspect-correct canvas dimensions for bounds
+ */
+function getAspectCorrectDimensions(bounds: Bounds, targetSize: number): { width: number; height: number } {
+  const mercNorth = latToMercatorY(bounds.north);
+  const mercSouth = latToMercatorY(bounds.south);
+  const mercHeight = mercNorth - mercSouth;
+
+  // Convert longitude to same Mercator units (radians)
+  const mercWidth = (bounds.east - bounds.west) * Math.PI / 180;
+
+  const aspectRatio = mercWidth / mercHeight;
+
+  if (aspectRatio > 1) {
+    return { width: targetSize, height: Math.round(targetSize / aspectRatio) };
+  } else {
+    return { width: Math.round(targetSize * aspectRatio), height: targetSize };
+  }
 }
 
 /**
@@ -406,40 +425,42 @@ export async function exportCoverageMap(options: ExportOptions): Promise<void> {
     coverage,
     tileLayerUrl,
     width = DEFAULT_CANVAS_SIZE,
-    height = DEFAULT_CANVAS_SIZE,
     colorIndex = 0,
   } = options;
 
   // Calculate bounds
   const bounds = getCoverageBounds(coverage);
 
+  // Calculate aspect-correct dimensions
+  const { width: canvasWidth, height: canvasHeight } = getAspectCorrectDimensions(bounds, width);
+
   // Create canvas
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
   const ctx = canvas.getContext('2d')!;
 
   // Fill with dark background as fallback
   ctx.fillStyle = '#1a1a2e';
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Calculate optimal zoom
-  const zoom = getOptimalZoom(bounds, width, height);
+  const zoom = getOptimalZoom(bounds, canvasWidth, canvasHeight);
 
   // Draw map tiles
-  await drawTilesToCanvas(ctx, bounds, zoom, tileLayerUrl, width, height);
+  await drawTilesToCanvas(ctx, bounds, zoom, tileLayerUrl, canvasWidth, canvasHeight);
 
   // Draw coverage points
-  drawCoveragePoints(ctx, coverage, bounds, width, height, colorIndex);
+  drawCoveragePoints(ctx, coverage, bounds, canvasWidth, canvasHeight, colorIndex);
 
   // Draw grid square label
   if (coverage.gridSquare) {
-    drawGridSquareLabel(ctx, coverage.gridSquare, width);
+    drawGridSquareLabel(ctx, coverage.gridSquare, canvasWidth);
   }
 
   // Draw legend
   const maxDistance = Math.max(...coverage.rays.map((r) => r.maxDistance), 1);
-  drawLegend(ctx, maxDistance, width, height, colorIndex);
+  drawLegend(ctx, maxDistance, canvasWidth, canvasHeight, colorIndex);
 
   // Generate filename
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
